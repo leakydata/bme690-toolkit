@@ -12,3 +12,4 @@ exports/
 third_party/coines*/
 *.bmerawdata
 *.bmelabelinfo
+firmware/*/build/

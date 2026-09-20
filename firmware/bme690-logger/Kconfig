@@ -1,0 +1,7 @@
+source "Kconfig.zephyr"
+
+config BME690_LOG_LEVEL
+	int "BME690 driver log level"
+	default 3
+	help
+	  0 none, 1 error, 2 warning, 3 info, 4 debug.
