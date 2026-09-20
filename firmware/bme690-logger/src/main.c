@@ -91,36 +91,63 @@ int main(void)
 	memcpy(heat.temp_prof, hp354_temp, sizeof(hp354_temp));
 	memcpy(heat.dur_prof, hp354_dur, sizeof(hp354_dur));
 
+	/* Bring-up is deliberately forgiving: wiring eight chip selects one at
+	 * a time is normal, so report what answered and keep retrying rather
+	 * than refusing to start. Watch this while you wire. */
+	while (found == 0) {
+		printk("\n--- BME690 shuttle bring-up ---\n");
+		for (int i = 0; i < NUM_SENSORS; i++) {
+			struct bme690_dev *d = &sensors[i];
+
+			d->spi = spi;
+			d->cs = cs_pins[i];
+			d->index = i;
+			d->amb_temp = 25;
+			d->spi_cfg.frequency = 5000000;
+			d->spi_cfg.operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB |
+					       SPI_OP_MODE_MASTER;
+
+			if (bme690_init(d) != 0) {
+				printk("  sensor %d  --  no answer\n", i);
+				d->chip_id = 0;
+				continue;
+			}
+			printk("  sensor %d  OK  chip 0x%02x  variant %u  "
+			       "par_t1=%u par_g1=%d\n",
+			       i, d->chip_id, d->variant_id,
+			       d->calib.par_t1, d->calib.par_g1);
+			found++;
+		}
+
+		if (found == 0) {
+			printk("\nNothing answered. Check:\n"
+			       "  3V3 on shuttle Row 1 pins 1 (Vdd) and 2 (VddIO)\n"
+			       "  GND on Row 1 pin 3\n"
+			       "  SCK Row 2 pin 2 -> D8, SDO Row 2 pin 3 -> D9, "
+			       "SDI Row 2 pin 4 -> D10\n"
+			       "  at least one chip select, e.g. Row 1 pin 4 -> D0\n"
+			       "Retrying in 3 s; wire as you watch.\n");
+			k_msleep(3000);
+		}
+	}
+
+	printk("\n%d of %d sensors responding.\n", found, NUM_SENSORS);
+
 	for (int i = 0; i < NUM_SENSORS; i++) {
 		struct bme690_dev *d = &sensors[i];
 
-		d->spi = spi;
-		d->cs = cs_pins[i];
-		d->index = i;
-		d->amb_temp = 25;
-		d->spi_cfg.frequency = 5000000;
-		d->spi_cfg.operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB |
-				       SPI_OP_MODE_MASTER;
-
-		if (bme690_init(d) != 0) {
-			LOG_WRN("sensor %d not responding", i);
+		if (d->chip_id != BME690_CHIP_ID) {
 			continue;
 		}
 		if (bme690_set_conf(d, &conf) != 0 ||
 		    bme690_set_heatr_conf(d, BME690_PARALLEL_MODE, &heat) != 0 ||
 		    bme690_set_op_mode(d, BME690_PARALLEL_MODE) != 0) {
 			LOG_ERR("sensor %d configuration failed", i);
-			continue;
+			d->chip_id = 0;
+			found--;
 		}
-		found++;
-		LOG_INF("sensor %d ready (chip 0x%02x variant %u)",
-			i, d->chip_id, d->variant_id);
 	}
 
-	if (found == 0) {
-		LOG_ERR("no sensors found -- check wiring and 3V3 on Vdd/VddIO");
-		return -ENODEV;
-	}
 	LOG_INF("%d sensors scanning, shared heater duration %u ms",
 		found, heat.shared_heatr_dur);
 	printk("# sensor,t_ms,temp_C,press_hPa,hum_pct,gas_ohm,step,heat_stable\n");

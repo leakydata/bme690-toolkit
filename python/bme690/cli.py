@@ -12,6 +12,7 @@ from . import registers as R
 from .profiles import (find, load_duty_cycle_profiles, load_heater_profiles,
                        stabilization_profile)
 from .rawdata import Label, RawDataWriter
+from . import ingest as ingest_mod
 from .recorder import Recorder
 
 
@@ -261,6 +262,53 @@ def cmd_record(args) -> int:
 
 # ---------------------------------------------------------------------- main
 
+def cmd_ingest(args) -> int:
+    """Turn the nRF52840 logger's serial output into a .bmerawdata file."""
+    hp = _resolve_heater_profile(args.heater_profile, args.config_dir)
+    dc = find(load_duty_cycle_profiles(args.config_dir), args.duty_cycle)
+    labels = _parse_labels(args.labels)
+
+    if args.from_file:
+        with open(args.from_file) as f:
+            lines = list(f)
+        source = f"{args.from_file} ({len(lines)} lines)"
+    else:
+        lines = ingest_mod.serial_lines(args.port, args.duration)
+        source = f"{args.port}"
+        print(f"Reading {source}"
+              + (f" for {args.duration:.0f}s" if args.duration else " until interrupted")
+              + " -- Ctrl-C to stop early")
+
+    state = {"n": 0, "last": 0.0}
+
+    def progress(n, rec):
+        state["n"] = n
+        now = time.time()
+        if now - state["last"] < 1.0:
+            return
+        state["last"] = now
+        print(f"\r  {n} records   t={rec.t_ms / 1000:.1f}s", end="", flush=True)
+
+    try:
+        writer = ingest_mod.build(ingest_mod.parse_stream(lines), hp, dc,
+                                  labels=labels, progress=progress)
+    except KeyboardInterrupt:
+        print("\n  interrupted")
+        return 130
+    print()
+
+    if not writer.rows:
+        print("no records parsed -- is the firmware running and printing 'D,' lines?",
+              file=sys.stderr)
+        return 1
+    written = writer.write(args.output)
+    print(f"\nWrote {len(writer.rows)} data points from {len(writer.sensor_indices)} sensors:")
+    for w in written:
+        print(f"  {w}")
+    print("\nImport it in BME AI-Studio with 'Import Data' -> 'Specimen Raw Data'.")
+    return 0
+
+
 def cmd_burn_in(args) -> int:
     """Hold every sensor at 320 degC to stabilise factory-new elements."""
     args.heater_profile = "HP-STAB"
@@ -321,6 +369,21 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("-o", "--output", default=None,
                    help="where to log the run (default: recordings/burn_in_<timestamp>.bmerawdata)")
     b.set_defaults(func=cmd_burn_in)
+
+    g = sub.add_parser("ingest",
+                       help="convert the nRF52840 logger's serial output to .bmerawdata")
+    g.add_argument("-o", "--output", required=True, help="output path (.bmerawdata)")
+    src = g.add_mutually_exclusive_group(required=True)
+    src.add_argument("--port", help="serial port, e.g. /dev/ttyACM0")
+    src.add_argument("--from-file", help="a previously captured log")
+    g.add_argument("-d", "--duration", type=float, default=None,
+                   help="seconds to read from the port (default: until interrupted)")
+    g.add_argument("--heater-profile", default="HP-354",
+                   help="the profile the firmware is running (default: HP-354)")
+    g.add_argument("--duty-cycle", default="RDC-1-0 Continuous")
+    g.add_argument("--labels", default=None,
+                   help="label schedule 'NAME:SECONDS,NAME:SECONDS'")
+    g.set_defaults(func=cmd_ingest)
     return p
 
 

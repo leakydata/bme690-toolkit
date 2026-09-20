@@ -83,6 +83,26 @@ bme690 read -n 5 -i 2        forced-mode measurements
 bme690 profiles              heater and duty cycle profiles AI-Studio knows
 bme690 record -o F [...]     record a scan to .bmerawdata
 bme690 burn-in --hours 12    stabilise the sensors
+bme690 ingest -o F --port P  convert the nRF52840 logger's output to .bmerawdata
+```
+
+### Two capture paths, one file format
+
+| path | hardware | command |
+|---|---|---|
+| USB, host-driven | shuttle on an Application Board 3.1 | `bme690 record` |
+| standalone firmware | shuttle on any nRF52840 | `bme690 ingest` |
+
+Both produce identical `.bmerawdata`, so captures from either import into the
+same AI-Studio project.
+
+```bash
+# stream from the nRF52840 logger straight into a labelled capture
+bme690 ingest --port /dev/ttyACM0 -o coffee.bmerawdata --labels "coffee:300,air:300"
+
+# or convert a log you captured earlier
+cat /dev/ttyACM0 > run.txt
+bme690 ingest --from-file run.txt -o coffee.bmerawdata
 ```
 
 `profiles` reads its catalogue from an AI-Studio installation, or from
