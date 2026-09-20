@@ -9,6 +9,7 @@
  * SPDX-License-Identifier: MIT
  */
 #include "bme690.h"
+#include "bme690_zephyr.h"
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
@@ -38,6 +39,7 @@ static const struct gpio_dt_spec cs_pins[NUM_SENSORS] = {
 };
 
 static struct bme690_dev sensors[NUM_SENSORS];
+static struct bme690_zephyr_ctx sensor_ctx[NUM_SENSORS];
 static uint8_t last_meas[NUM_SENSORS];
 static bool    have_last[NUM_SENSORS];
 static struct bme690_data pending[NUM_SENSORS];
@@ -99,15 +101,11 @@ int main(void)
 		for (int i = 0; i < NUM_SENSORS; i++) {
 			struct bme690_dev *d = &sensors[i];
 
-			d->spi = spi;
-			d->cs = cs_pins[i];
 			d->index = i;
 			d->amb_temp = 25;
-			d->spi_cfg.frequency = 5000000;
-			d->spi_cfg.operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB |
-					       SPI_OP_MODE_MASTER;
-
-			if (bme690_init(d) != 0) {
+			if (bme690_zephyr_attach(d, &sensor_ctx[i], spi,
+						 cs_pins[i], 5000000) != 0 ||
+			    bme690_init(d) != 0) {
 				printk("  sensor %d  --  no answer\n", i);
 				d->chip_id = 0;
 				continue;

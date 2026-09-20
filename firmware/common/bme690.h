@@ -1,18 +1,21 @@
 /*
- * BME690 gas sensor driver for Zephyr.
+ * BME690 gas sensor driver -- portable core.
  *
  * Register layout and compensation are ported from Bosch Sensortec's
  * BME690_SensorAPI (bme69x.c / bme69x_defs.h), BSD-3-Clause, using the
  * floating-point compensation path.
+ *
+ * No RTOS or HAL dependencies: supply read/write/delay callbacks and this
+ * builds anywhere. Transport shims for Zephyr and ESP-IDF live beside the
+ * applications that use them.
  *
  * SPDX-License-Identifier: MIT
  */
 #ifndef BME690_H_
 #define BME690_H_
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/spi.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #define BME690_CHIP_ID            0x61
@@ -81,11 +84,15 @@ struct bme690_data {
 	uint8_t  idac, res_heat, gas_wait;
 };
 
-/* One sensor on a shared SPI bus with its own chip select. */
+/*
+ * One sensor. The transport owns chip-select and the SPI peripheral; the core
+ * only asks it to move bytes. reg already carries the read/write bit.
+ */
 struct bme690_dev {
-	const struct device     *spi;
-	struct spi_config        spi_cfg;
-	struct gpio_dt_spec      cs;
+	int  (*read)(void *ctx, uint8_t reg, uint8_t *buf, size_t len);
+	int  (*write)(void *ctx, uint8_t reg, const uint8_t *buf, size_t len);
+	void (*delay_ms)(uint32_t ms);
+	void                    *ctx;
 	struct bme690_calib      calib;
 	uint8_t                  chip_id;
 	uint8_t                  variant_id;
@@ -93,6 +100,12 @@ struct bme690_dev {
 	int8_t                   amb_temp;
 	uint8_t                  index;
 };
+
+/* Errors are plain negative ints so the core stays free of platform headers. */
+#define BME690_OK            0
+#define BME690_E_COM        -1
+#define BME690_E_NOT_FOUND  -2
+#define BME690_E_INVAL      -3
 
 #define BME690_STATUS_NEW_DATA    0x80
 #define BME690_STATUS_GAS_VALID   0x20

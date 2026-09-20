@@ -1,18 +1,17 @@
 /*
- * BME690 gas sensor driver for Zephyr.
+ * BME690 gas sensor driver -- portable core.
  *
  * Ported from Bosch Sensortec's BME690_SensorAPI (BSD-3-Clause), float
  * compensation path. Verified against a working Python port that produced
  * plausible readings from eight sensors simultaneously.
  *
+ * Depends on nothing but the C library; the application supplies read, write
+ * and delay callbacks.
+ *
  * SPDX-License-Identifier: MIT
  */
 #include "bme690.h"
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
 #include <string.h>
-
-LOG_MODULE_REGISTER(bme690, CONFIG_BME690_LOG_LEVEL);
 
 /* registers */
 #define REG_COEFF3        0x00
@@ -110,29 +109,15 @@ LOG_MODULE_REGISTER(bme690, CONFIG_BME690_LOG_LEVEL);
 
 /* ---------------------------------------------------------------- transport */
 
-static int spi_xfer(struct bme690_dev *dev, uint8_t reg,
-		    uint8_t *rx, const uint8_t *tx, size_t len)
+static int xfer_read(struct bme690_dev *dev, uint8_t reg, uint8_t *buf, size_t len)
 {
-	uint8_t hdr = reg;
-	const struct spi_buf tx_bufs[] = {
-		{ .buf = &hdr, .len = 1 },
-		{ .buf = (void *)tx, .len = tx ? len : 0 },
-	};
-	const struct spi_buf_set tx_set = {
-		.buffers = tx_bufs, .count = tx ? 2 : 1,
-	};
-	struct spi_buf rx_bufs[] = {
-		{ .buf = NULL, .len = 1 },
-		{ .buf = rx, .len = rx ? len : 0 },
-	};
-	const struct spi_buf_set rx_set = { .buffers = rx_bufs, .count = 2 };
-	int rc;
+	return dev->read(dev->ctx, reg, buf, len) ? BME690_E_COM : BME690_OK;
+}
 
-	gpio_pin_set_dt(&dev->cs, 1);   /* active low, configured ACTIVE_LOW */
-	rc = rx ? spi_transceive(dev->spi, &dev->spi_cfg, &tx_set, &rx_set)
-		: spi_write(dev->spi, &dev->spi_cfg, &tx_set);
-	gpio_pin_set_dt(&dev->cs, 0);
-	return rc;
+static int xfer_write(struct bme690_dev *dev, uint8_t reg, const uint8_t *buf,
+		      size_t len)
+{
+	return dev->write(dev->ctx, reg, buf, len) ? BME690_E_COM : BME690_OK;
 }
 
 /* The BME690 keeps registers in two SPI memory pages selected by bit 4 of
@@ -146,12 +131,12 @@ static int set_mem_page(struct bme690_dev *dev, uint8_t reg)
 	if (page == dev->mem_page) {
 		return 0;
 	}
-	rc = spi_xfer(dev, REG_MEM_PAGE | SPI_RD_MSK, &val, NULL, 1);
+	rc = xfer_read(dev, REG_MEM_PAGE | SPI_RD_MSK, &val, 1);
 	if (rc) {
 		return rc;
 	}
 	val = (val & ~MEM_PAGE_MSK) | (page & MEM_PAGE_MSK);
-	rc = spi_xfer(dev, REG_MEM_PAGE & SPI_WR_MSK, NULL, &val, 1);
+	rc = xfer_write(dev, REG_MEM_PAGE & SPI_WR_MSK, &val, 1);
 	if (rc == 0) {
 		dev->mem_page = page;
 	}
@@ -162,14 +147,14 @@ static int get_regs(struct bme690_dev *dev, uint8_t reg, uint8_t *buf, size_t le
 {
 	int rc = set_mem_page(dev, reg);
 
-	return rc ? rc : spi_xfer(dev, reg | SPI_RD_MSK, buf, NULL, len);
+	return rc ? rc : xfer_read(dev, reg | SPI_RD_MSK, buf, len);
 }
 
 static int set_reg(struct bme690_dev *dev, uint8_t reg, uint8_t val)
 {
 	int rc = set_mem_page(dev, reg);
 
-	return rc ? rc : spi_xfer(dev, reg & SPI_WR_MSK, NULL, &val, 1);
+	return rc ? rc : xfer_write(dev, reg & SPI_WR_MSK, &val, 1);
 }
 
 /* ------------------------------------------------------------ compensation */
@@ -338,7 +323,7 @@ int bme690_soft_reset(struct bme690_dev *dev)
 
 	dev->mem_page = -1;
 	rc = set_reg(dev, REG_SOFT_RESET, SOFT_RESET_CMD);
-	k_msleep(10);
+	dev->delay_ms(10);
 	dev->mem_page = -1;
 	return rc;
 }
@@ -347,12 +332,8 @@ int bme690_init(struct bme690_dev *dev)
 {
 	int rc;
 
-	if (!gpio_is_ready_dt(&dev->cs)) {
-		return -ENODEV;
-	}
-	rc = gpio_pin_configure_dt(&dev->cs, GPIO_OUTPUT_INACTIVE);
-	if (rc) {
-		return rc;
+	if (!dev->read || !dev->write || !dev->delay_ms) {
+		return BME690_E_INVAL;
 	}
 	dev->mem_page = -1;
 
@@ -365,9 +346,7 @@ int bme690_init(struct bme690_dev *dev)
 		return rc;
 	}
 	if (dev->chip_id != BME690_CHIP_ID) {
-		LOG_ERR("sensor %u: chip id 0x%02x, expected 0x%02x",
-			dev->index, dev->chip_id, BME690_CHIP_ID);
-		return -ENODEV;
+		return BME690_E_NOT_FOUND;   /* caller reports; core stays silent */
 	}
 	rc = get_regs(dev, REG_VARIANT_ID, &dev->variant_id, 1);
 	if (rc) {
@@ -404,7 +383,7 @@ int bme690_set_op_mode(struct bme690_dev *dev, uint8_t op_mode)
 			if (rc) {
 				return rc;
 			}
-			k_msleep(10);
+			dev->delay_ms(10);
 		}
 	} while (pow != BME690_SLEEP_MODE);
 
@@ -479,16 +458,16 @@ int bme690_set_heatr_conf(struct bme690_dev *dev, uint8_t op_mode,
 
 	if (op_mode == BME690_PARALLEL_MODE) {
 		if (conf->shared_heatr_dur == 0) {
-			return -EINVAL;
+			return BME690_E_INVAL;
 		}
 		for (int i = 0; i < BME690_PROFILE_LEN; i++) {
 			/* gas_wait_x is a single-byte multiplier of the shared
 			 * duration. Truncating a larger value would silently
 			 * shorten the step, so refuse instead. */
+			/* gas_wait_x is a single byte; truncating would silently
+			 * shorten the step, so refuse instead. */
 			if (conf->dur_prof[i] > 255) {
-				LOG_ERR("step %d duration %u exceeds 255",
-					i, conf->dur_prof[i]);
-				return -EINVAL;
+				return BME690_E_INVAL;
 			}
 			rc = set_reg(dev, REG_RES_HEAT0 + i,
 				     calc_res_heat(dev, conf->temp_prof[i]));
@@ -507,7 +486,7 @@ int bme690_set_heatr_conf(struct bme690_dev *dev, uint8_t op_mode,
 			return rc;
 		}
 	} else {
-		return -ENOTSUP;
+		return BME690_E_INVAL;
 	}
 
 	rc = get_regs(dev, REG_CTRL_GAS_0, gas, 2);
@@ -532,7 +511,7 @@ int bme690_get_data(struct bme690_dev *dev, uint8_t op_mode,
 
 	*n_out = 0;
 	if (op_mode != BME690_PARALLEL_MODE) {
-		return -ENOTSUP;
+		return BME690_E_INVAL;
 	}
 	rc = get_regs(dev, REG_FIELD0, buf, sizeof(buf));
 	if (rc == 0) {
