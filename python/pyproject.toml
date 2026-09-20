@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bme690tool"
+version = "0.1.0"
+description = "Linux tooling for the Bosch BME690 8x shuttle board on Application Board 3.1"
+requires-python = ">=3.9"
+dependencies = ["coinespy>=1.0.6"]
+
+[project.scripts]
+bme690 = "bme690.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["bme690*"]

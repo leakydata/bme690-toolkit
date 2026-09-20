@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+# Captured data and projects stay local
+recordings/
+projects/
+exports/
+# Never commit vendor SDKs -- scripts/setup-coines.sh fetches them
+third_party/coines*/
+*.bmerawdata
+*.bmelabelinfo
