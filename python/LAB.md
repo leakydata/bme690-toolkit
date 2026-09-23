@@ -41,7 +41,8 @@ laptop.
 
 On BME AI-Studio's coffee demo (one 2.5-hour session), the deep models beat
 the AI-Studio-style network on the hard task: Espresso vs Filter Coffee vs Air,
-held-out data, 96 % against 91 %. Self-supervised pre-training does *not* help
+96 % against 91 % on held-out data -- though the demo has only one specimen of
+each coffee, so that test is optimistic. Self-supervised pre-training does *not* help
 yet. On a single session it learns when a moment was recorded (drift) rather
 than what was in the air. It needs many hours of unlabelled logging across
 sessions to be tested properly. Notebook 03 explains this in full.
