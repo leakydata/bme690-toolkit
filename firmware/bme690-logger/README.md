@@ -1,5 +1,8 @@
 # BME690 8x shuttle logger (Zephyr / nRF52840)
 
+> **Not maintained.** The supported firmware is the ESP32-S3 build in
+> [`../bme690-logger-idf`](../bme690-logger-idf/). This Zephyr build is kept for reference.
+
 Runs all eight BME690s on a **Shuttle Board 3.0** from a plain nRF52840 —
 no Bosch Application Board required.
 

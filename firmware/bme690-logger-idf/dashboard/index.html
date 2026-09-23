@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>BME690 Logger</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--fg:#1b1f24;--mut:#59636e;--line:#dce0e5;--acc:#0a5fc2;--acct:#fff;--ok:#1a7f37;--warn:#8a5d00;--err:#c42b2b;--info:#0a5fc2;--okb:#e5f3e9;--warnb:#fff3d1;--errb:#fde7e7;--infob:#e6effa;
+--sen:#E69F00,#56B4E9,#009E73,#B8A000,#0072B2,#D55E00,#CC79A7,#555555;color-scheme:light dark}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1115;--card:#171b21;--fg:#e7eaee;--mut:#9ba5b0;--line:#2b3139;--acc:#5ea8ff;--acct:#08121f;--ok:#4cc36b;--warn:#e2b341;--err:#ff6f6f;--info:#5ea8ff;--okb:#132a1a;--warnb:#30270e;--errb:#381618;--infob:#12243b;
+--sen:#E69F00,#56B4E9,#1fc796,#F0E442,#4aa3e8,#ff7a33,#e08dc0,#c8c8c8}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:10px;padding-bottom:8px}
+h1{font-size:17px;margin:0}
+h2{font-size:16px;margin:0 0 8px}
+h3{font-size:14px;margin:14px 0 6px}
+.mut{color:var(--mut)}.sm{font-size:13px}
+.conn{display:flex;align-items:center;gap:7px;font-size:13px;text-align:right}
+.conn i{width:10px;height:10px;border-radius:50%;background:var(--err);flex:none}
+.conn.live i{background:var(--ok)}.conn.poll i{background:var(--warn)}
+nav{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding-bottom:8px}
+@media(min-width:720px){nav{grid-template-columns:repeat(6,1fr)}}
+nav button{background:none;border:1px solid transparent;border-radius:8px;padding:7px 4px;font:inherit;font-size:14px;color:var(--mut);cursor:pointer}
+nav button[aria-selected=true]{background:var(--infob);color:var(--fg);border-color:var(--line);font-weight:600}
+main{padding-top:14px;padding-bottom:40px}
+section[hidden]{display:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+.demo{background:var(--infob);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:13px}
+.verdict{border-radius:10px;padding:14px 16px;margin-bottom:14px;border:1px solid var(--line);border-left:6px solid var(--ok);background:var(--card)}
+.verdict b{display:block;font-size:20px;line-height:1.25}
+.verdict.warn{border-left-color:var(--warn)}.verdict.err{border-left-color:var(--err)}.verdict.mut{border-left-color:var(--line)}
+.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+@media(min-width:720px){.facts{grid-template-columns:repeat(4,1fr)}}
+.facts div{font-size:13px;color:var(--mut)}.facts b{display:block;font-size:15px;color:var(--fg)}
+.probs{list-style:none;margin:0;padding:0}
+.probs li{padding:10px 12px;border-radius:8px;margin-bottom:8px;border-left:4px solid}
+.probs .error{background:var(--errb);border-color:var(--err)}.probs .warn{background:var(--warnb);border-color:var(--warn)}.probs .info{background:var(--infob);border-color:var(--info)}
+.probs em{font-style:normal;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-right:6px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:720px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tile{text-align:left;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:10px;padding:10px;cursor:pointer;min-width:0}
+.tile.bad{background:var(--errb)}.tile.sus{background:var(--warnb)}
+.tile .t{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.tile .t b{font-size:18px}
+.tile .v{display:grid;grid-template-columns:1fr 1fr;gap:0 6px;margin-top:6px;font-size:13px;white-space:nowrap}
+.tile p{margin:6px 0 0;font-size:13px}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.p-ok{background:var(--okb);color:var(--ok)}.p-err{background:var(--errb);color:var(--err)}.p-warn{background:var(--warnb);color:var(--warn)}.p-mut{background:var(--bg);color:var(--mut)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mut);font-weight:600}
+tr.hl td{background:var(--errb)}tr.hl td:first-child{box-shadow:inset 4px 0 var(--err)}
+tr.nc td{color:var(--mut)}
+.grid2{display:grid;gap:14px}
+@media(min-width:720px){.grid2{grid-template-columns:1fr 1fr}}
+.grid3{display:grid;gap:10px}
+@media(min-width:720px){.grid3{grid-template-columns:repeat(3,1fr)}}
+.btn{font:inherit;font-size:15px;font-weight:600;border-radius:8px;padding:9px 16px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.btn{text-decoration:none;display:inline-block}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--acct)}
+.btn.dan{background:var(--err);border-color:var(--err);color:#fff}
+.btn.big{font-size:18px;padding:14px 22px;width:100%}
+.btn.sm{font-size:13px;padding:5px 10px;font-weight:500}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;border:0;background:var(--card);color:var(--fg);padding:6px 11px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--acc);color:var(--acct)}
+select,input{font:inherit;font-size:15px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);max-width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chip{font:inherit;font-size:13px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:4px 11px;cursor:pointer}
+.chip i{width:12px;height:12px;border-radius:3px;background:var(--c)}
+.chip[aria-pressed=false]{opacity:.45}#spick .chip[aria-pressed=false]{opacity:1}.chip[aria-pressed=false] i{background:none;border:2px solid var(--c)}
+canvas{display:block;width:100%;height:150px}
+canvas.tall{height:280px}
+.confirm{margin-top:10px;padding:12px;border-radius:8px;background:var(--warnb);border-left:4px solid var(--warn)}
+.confirm p{margin:0 0 10px}
+.big{font-size:28px;font-weight:700;line-height:1.2}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--mut);margin-right:8px;vertical-align:1px}
+.dot.on{background:var(--err);animation:bl 1.4s infinite}
+@keyframes bl{50%{opacity:.3}}
+.meter{height:8px;background:var(--bg);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:6px 0}
+.meter i{display:block;height:100%;background:var(--acc)}
+.checks{list-style:none;padding:0;margin:0}
+.checks li{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.checks li .pill{min-width:52px;text-align:center;flex:none;align-self:flex-start;margin-top:2px}
+.note{font-size:13px;color:var(--mut);margin:8px 0 0}
+form.lab{display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:center;margin-top:10px}
+form.lab label{font-size:13px;color:var(--mut)}
+.frow{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.frow code{word-break:break-all;font-size:13px}
+#toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
+#toast.show{opacity:1}#toast.bad{background:var(--err);color:#fff}
+a{color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+</style>
+</head>
+<body>
+<header>
+<div class="wrap hdr">
+<div><h1>BME690 Logger</h1><div id="board" class="mut sm">&nbsp;</div></div>
+<div id="conn" class="conn" role="status"><i></i><span>Connecting…</span></div>
+</div>
+<nav class="wrap" role="tablist">
+<button role="tab" data-t="health">Health</button>
+<button role="tab" data-t="graphs">Live graphs</button>
+<button role="tab" data-t="sensor">Sensor detail</button>
+<button role="tab" data-t="rec">Recording</button>
+<button role="tab" data-t="files">Files</button>
+<button role="tab" data-t="brec">Record here</button>
+</nav>
+</header>
+<main class="wrap">
+<div id="demo" class="demo" hidden><b>Demo mode:</b> a simulated board, so every button can be tried without hardware. U7 is deliberately "unplugged".</div>
+
+<section id="t-health">
+<div id="verdict" class="verdict mut"><b>Waiting for the board…</b><span class="mut">Make sure this phone or laptop is joined to the board's BME690-XXXX WiFi.</span></div>
+<div id="probs"></div>
+<div class="card">
+<h2>Sensors</h2>
+<p class="note" style="margin:0 0 10px">The shuttle board has eight BME690 gas sensors, printed U1 to U8. The board software counts them from 0, so U1 is "sensor 0". Tap a sensor for details.</p>
+<div id="tiles" class="tiles"></div>
+<div class="row" style="margin-top:14px"><button id="rescan" class="btn">Re-check sensors</button><span class="note" style="margin:0">Use after fixing a wire.</span></div>
+<div id="rescanc"></div>
+</div>
+<div class="card">
+<h2>Wiring reference</h2>
+<p class="note" style="margin:0 0 8px">Rows in red belong to sensors that are not working. If <b>every</b> sensor fails, check the shared wires first: power, ground, SCK, SDO and SDI.</p>
+<div class="tbl"><table><thead><tr><th>Shuttle pin</th><th>Signal</th><th>ESP32-S3</th></tr></thead><tbody id="wire"></tbody></table></div>
+<h3>SD card (its own separate wires)</h3>
+<div class="tbl"><table><thead><tr><th>SD card pin</th><th>ESP32-S3</th></tr></thead><tbody id="sdw"></tbody></table></div>
+<p class="note">Shuttle pins: P1 and P2 are the two rows of the shuttle-board connector; pin 1 is marked on the board. "CS" (chip select) is the wire that picks one sensor to talk to, one per sensor.</p>
+</div>
+</section>
+
+<section id="t-graphs" hidden>
+<div class="card">
+<div class="row" style="justify-content:space-between">
+<h2 style="margin:0">Gas resistance</h2>
+<div class="row"><span class="seg" id="win"><button data-w="2">2 min</button><button data-w="10">10 min</button><button data-w="30">30 min</button></span></div>
+</div>
+<div class="row" style="margin-top:10px"><label class="sm mut" for="stepsel">Heater step</label><select id="stepsel"></select></div>
+<p class="note">Each sensor heats itself through 10 temperatures in turn and its resistance jumps at every step. Pick one step for a smooth trend, or "All steps" for the whole zig-zag. Lower resistance usually means more gas. Log scale.</p>
+<div id="legend" class="chips"></div>
+<canvas id="cgas" class="tall" aria-label="Gas resistance chart"></canvas>
+</div>
+<div class="grid3">
+<div class="card"><h2>Temperature <span class="mut sm">°C</span></h2><canvas id="ctemp"></canvas></div>
+<div class="card"><h2>Humidity <span class="mut sm">% RH</span></h2><canvas id="chum"></canvas></div>
+<div class="card"><h2>Pressure <span class="mut sm">hPa</span></h2><canvas id="cpress"></canvas></div>
+</div>
+<p class="note">Graphs only cover the time this page has been open and are not saved.</p>
+</section>
+
+<section id="t-sensor" hidden>
+<div class="card"><h2>Pick a sensor</h2><div id="spick" class="chips" style="margin:0"></div></div>
+<div class="grid2">
+<div class="card"><h2 id="shead">Health check</h2><ul id="checks" class="checks"></ul></div>
+<div class="card">
+<h2>Heater-step fingerprint</h2>
+<canvas id="cfp" class="tall"></canvas>
+<p class="note">Gas resistance at each of the 10 heater steps: latest complete cycle solid, the one before dashed. A healthy sensor repeats the same shape every cycle, highest at the coolest steps. Flat, empty or jumping bars point to a problem.</p>
+</div>
+</div>
+<div class="card"><h2>Gas trace, one line per heater step</h2><div id="steplg" class="chips"></div><canvas id="csteps" class="tall"></canvas><p class="note">Uses the time window chosen on Live graphs.</p></div>
+</section>
+
+<section id="t-rec" hidden>
+<div class="grid2">
+<div class="card">
+<div class="big"><span id="recdot" class="dot"></span><span id="recstate">…</span></div>
+<p id="recinfo" class="mut sm"></p>
+<button id="recbtn" class="btn big pri">Start recording</button>
+<p id="rechint" class="note"></p>
+</div>
+<div class="card">
+<div class="mut sm">Current label</div>
+<div class="big" id="curlab">–</div>
+<button id="nextbtn" class="btn big" style="margin-top:10px">Next sample</button>
+<p class="note">Each label becomes a separate sample ("specimen") in AI-Studio. Press Next sample whenever you change what the sensors are smelling. The BOOT button on the board does the same.</p>
+</div>
+</div>
+<div class="grid2">
+<div class="card">
+<h2>Label names</h2>
+<div id="labs"></div>
+<form id="labform" class="lab">
+<label for="lt">Tag no.</label><input id="lt" type="number" min="1" step="1" inputmode="numeric" required>
+<label for="ln">Name</label><input id="ln" maxlength="40" placeholder="e.g. coffee">
+<label for="ld">Note</label><input id="ld" maxlength="120" placeholder="optional description">
+<span></span><button class="btn pri">Save and switch to this label</button>
+</form>
+<p class="note">Saving also makes this the current label, so new readings are tagged with it.</p>
+</div>
+<div class="card">
+<h2>SD card</h2>
+<div id="cardinfo"></div>
+<p class="note"><b>Getting data into BME AI-Studio:</b> take the card out (or download the files on the Files tab), then in AI-Studio use Import on any one chunk. The other chunks of that session are picked up automatically as long as they stay in the same folder.</p>
+</div>
+</div>
+<div class="card">
+<h2>Burn-in for new sensors</h2>
+<div id="bistate" class="mut">–</div>
+<div class="row" style="margin-top:10px"><label for="bihours" class="sm">Hours</label><input id="bihours" type="number" min="1" max="168" step="1" value="12" inputmode="numeric" style="width:5em"><button id="bistart" class="btn pri">Start burn-in</button><button id="bistop" class="btn dan" hidden>Stop burn-in</button></div>
+<p class="note">Factory-new sensors drift for their first hours. Bosch recommend at least <b>12 hours</b> on their stabilization profile (HP-001, 320 °C) before collecting data to train on. The board records the burn-in under the label "burn-in" and switches back to your heater profile by itself when it ends. Keep it in clean, still air.</p>
+</div>
+<div class="card">
+<h2>Heater profile</h2>
+<div id="cfginfo" class="mut">–</div>
+<div class="row" style="margin-top:10px"><label class="btn pri" for="cfgfile" tabindex="0">Upload a .bmeconfig…</label><input id="cfgfile" type="file" accept=".bmeconfig,application/json" hidden><button id="cfgreset" class="btn">Back to factory default</button></div>
+<p class="note">Design heater profiles in BME AI-Studio (board type <b>BME690 8x Shuttle board</b>), save the board configuration, and upload the <code>.bmeconfig</code> file here. The board checks it, keeps it on the SD card and uses it from then on. A recording in progress ends and a new session starts, because each recording holds one configuration.</p>
+</div>
+</section>
+
+<section id="t-files" hidden>
+<div class="card">
+<div class="row" style="justify-content:space-between"><h2 style="margin:0">Recordings on the card</h2><button id="frefresh" class="btn sm">Refresh</button></div>
+<p class="note">A session (e.g. s0007) is split into 15-minute chunks. Keep every <code>.bmelabelinfo</code> file next to its <code>.bmerawdata</code> file with the same name, or AI-Studio loses the label names. If a download does nothing, open <b>http://192.168.4.1</b> in your normal browser instead of the WiFi sign-in window.</p>
+<div id="flist"></div>
+</div>
+</section>
+
+<section id="t-brec" hidden>
+<div class="card">
+<h2>Record in this browser</h2>
+<p class="note" style="margin-top:0">No SD card needed: this page collects the live readings and gives you a <code>.bmerawdata</code> file (plus <code>.bmelabelinfo</code>) for AI-Studio. Keep the page open and the screen on; if the phone sleeps or WiFi drops, readings are missed.</p>
+<div class="facts"><div>Status<b id="bstate">Not recording</b></div><div>Time<b id="belap">0:00</b></div><div>Rows<b id="brows">0</b></div><div>Size (approx.)<b id="bsize">0 KB</b></div></div>
+<p id="bwarn" class="note"></p>
+<div class="row" style="margin-top:12px"><button id="bbtn" class="btn big pri">Start recording in browser</button></div>
+<div id="bout"></div>
+</div>
+</section>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const MOCK=location.protocol=='file:'||/[?&]mock=1\b/.test(location.search);
+const WIRE=[['U1','P1-4',1],['U2','P1-5',2],['U3','P1-6',4],['U4','P1-7',5],['U5','P2-5',6],['U6','P2-6',7],['U7','P2-7',15],['U8','P2-8',16]];
+const HP354=[[320,5],[100,2],[100,10],[100,30],[200,5],[200,5],[200,5],[320,5],[320,5],[320,5]];
+const WMAX=30*60e3,N=8;
+let S=null,CFG=null,conn='',ws=null,pollT=null,retry=1000,synced=false,lastMsg=0,PAL=[],lastPollMs=[];
+const buf=[...Array(N)].map(()=>[]),cyc=[...Array(N)].map(()=>({cur:[],last:null,prev:null,ls:-1}));
+const V={win:10*60e3,step:9,on:Array(N).fill(true),sel:0,tab:'health'};
+
+/* ---------- helpers ---------- */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const num=v=>typeof v=='number'&&isFinite(v)?v:null;
+const f1=(v,u)=>num(v)==null?'–':v.toFixed(1)+(u||'');
+function ohm(v){v=num(v);if(v==null)return'–';if(v>=1e6)return(v/1e6).toPrecision(3)+' MΩ';if(v>=1e3)return(v/1e3).toPrecision(3)+' kΩ';return v.toPrecision(3)+' Ω'}
+function ohmS(v){return v>=1e6?+(v/1e6).toPrecision(2)+'M':v>=1e3?+(v/1e3).toPrecision(2)+'k':+v.toPrecision(2)+''}
+function bytes(b){b=+b||0;return b>=1048576?(b/1048576).toFixed(1)+' MB':b>=1024?Math.round(b/1024)+' KB':b+' B'}
+function dur(ms){const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s/60)%60,x=s%60;return(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')}
+function html(el,h){if(el._h!==h){el.innerHTML=h;el._h=h}}
+let toastT;
+function toast(msg,bad){const t=$('#toast');t.textContent=msg;t.className='show'+(bad?' bad':'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',bad?6000:3000)}
+function palette(){PAL=getComputedStyle(document.documentElement).getPropertyValue('--sen').split(',').map(s=>s.trim())}
+function sensors(){const a=S&&Array.isArray(S.sensors)?S.sensors.filter(Boolean):[];
+return WIRE.map((w,i)=>Object.assign({index:i,part:w[0],shuttle_pin:w[1],gpio:w[2],state:'unknown'},a.find(x=>x.index===i)||{}))}
+function labelName(tag){const l=S&&Array.isArray(S.labels)?S.labels.find(x=>x&&x.tag===tag):null;return l&&l.name?l.name:''}
+function stepTemps(s){const hp=CFG&&CFG.configBody&&CFG.configBody.heaterProfiles;let p=null;
+if(Array.isArray(hp))p=hp.find(h=>h&&h.id===(s&&s.heater_profile))||hp[0];
+const v=p&&Array.isArray(p.temperatureTimeVectors)&&p.temperatureTimeVectors.length==10?p.temperatureTimeVectors:HP354;return v.map(x=>x[0])}
+
+/* ---------- network ---------- */
+async function api(m,p,b){
+if(MOCK)return mock.api(m,p,b);
+const o={method:m};if(b){o.headers={'Content-Type':'application/json'};o.body=JSON.stringify(b)}
+const r=await fetch(p,o);let j=null;try{j=await r.json()}catch(e){}
+if(!r.ok||(j&&j.error))throw new Error(j&&j.error?j.error:'The board answered HTTP '+r.status);
+return j}
+async function post(p,b,okMsg){
+try{const j=await api('POST',p,b);if(j&&typeof j=='object'&&!Array.isArray(j)&&j.sensors)onStatus(j);if(okMsg)toast(okMsg);return j}
+catch(e){toast('Could not do that: '+(e.message||'no answer from the board'),1);throw e}}
+function setConn(c){if(c==conn)return;if(c=='off')synced=false;conn=c;
+const el=$('#conn'),t={live:'Live',poll:'Live link down, updating every 2 s',off:'Not connected, retrying…'}[c];
+el.className='conn '+c;el.querySelector('span').textContent=t+(MOCK?' (demo)':'')}
+function connect(){
+let s;try{s=MOCK?mock.sock():new WebSocket((location.protocol=='https:'?'wss://':'ws://')+location.host+'/ws')}catch(e){return reconnect()}
+ws=s;
+s.onopen=()=>{retry=1000;lastMsg=Date.now();synced=false;setConn('live');stopPoll();if(!CFG)loadCfg()};
+s.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}if(!m)return;lastMsg=Date.now();if(m.t=='d')onData(m,true);else if(m.t=='status')onStatus(m)};
+s.onclose=()=>{if(ws!==s)return;ws=null;if(conn=='live')setConn('off');startPoll();reconnect()};
+s.onerror=()=>{try{s.close()}catch(_){}}}
+function reconnect(){setTimeout(connect,retry);retry=Math.min(retry*2,10000)}
+function startPoll(){if(pollT)return;poll();pollT=setInterval(poll,2000)}
+function stopPoll(){clearInterval(pollT);pollT=null}
+async function poll(){try{const j=await api('GET','/api/status');if(conn!='live'){setConn('poll');onStatus(j,true)}}catch(e){if(conn!='live')setConn('off')}}
+async function loadCfg(){try{const c=await api('GET','/api/config');if(c&&c.configBody){CFG=c;stepOpts();if(V.tab=='sensor')renderSensor()}}catch(e){}}
+function stepOpts(){$('#stepsel').innerHTML='<option value="-1">All steps</option>'+stepTemps(sensors()[0]).map((t,i)=>'<option value="'+i+'"'+(i==V.step?' selected':'')+'>Step '+(i+1)+' ('+t+' °C)</option>').join('')}
+
+function onStatus(j,fromPoll){
+if(!j||typeof j!='object')return;S=j;
+if(!synced&&num(j.unix)!=null){synced=true;const now=Math.floor(Date.now()/1000);
+if(!j.time_set||Math.abs(j.unix-now)>5)api('POST','/api/time',{unix:Math.floor(Date.now()/1000)}).then(r=>{if(r&&r.sensors)onStatus(r)}).catch(()=>{synced=false})}
+if(fromPoll)sensors().forEach((s,i)=>{const l=s.last;if(l&&l.ms!==lastPollMs[i]){lastPollMs[i]=l.ms;onData({s:i,ms:l.ms,temp:l.temp,press:l.press,hum:l.hum,gas:l.gas,step:l.step,stable:l.stable,tag:j.label&&j.label.tag},false)}});
+renderStatus()}
+function onData(m,live){
+const s=m.s;if(!(s>=0&&s<N))return;const st=m.step|0;
+const p={t:Date.now(),temp:num(m.temp),press:num(m.press),hum:num(m.hum),gas:num(m.gas),step:st};
+buf[s].push(p);
+const c=cyc[s];if(st<=c.ls){c.cur=[]}c.cur[st]=p.gas;c.ls=st;
+if(st==9){if(c.cur.filter(v=>v!=null).length==10){c.prev=c.last;c.last=c.cur}c.cur=[];c.ls=-1}
+if(live&&BR.on)BR.add(m)}
+function trim(){const lim=Date.now()-WMAX;for(const b of buf){let k=0;while(k<b.length&&b[k].t<lim)k++;if(b.length-k>6000)k=b.length-6000;if(k)b.splice(0,k)}}
+
+/* ---------- charts ---------- */
+function setup(cv){const d=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(!w)return null;
+if(cv.width!=Math.round(w*d)||cv.height!=Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d)}
+const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);g.clearRect(0,0,w,h);const cs=getComputedStyle(document.body);
+g.font='11px '+cs.fontFamily;return{g,w,h,fg:cs.getPropertyValue('--fg'),mut:cs.getPropertyValue('--mut'),line:cs.getPropertyValue('--line')}}
+function scale(lo,hi,log){if(log){lo=Math.log10(lo);hi=Math.log10(hi)}
+if(hi-lo<(log?.2:1e-9)){const c=(hi+lo)/2,p=log?.15:Math.max(Math.abs(c)*.005,.5);lo=c-p;hi=c+p}else{const p=(hi-lo)*.08;lo-=p;hi+=p}
+let t=[];const nice=(a,b)=>{const r=(b-a)/4,p=Math.pow(10,Math.floor(Math.log10(r))),st=[1,2,2.5,5,10].map(x=>x*p).find(x=>x>=r),o=[];for(let v=Math.ceil(a/st)*st;v<=b;v+=st)o.push(+v.toPrecision(6));return o};
+if(log){const sp=hi-lo;if(sp<1)t=nice(Math.pow(10,lo),Math.pow(10,hi)).map(Math.log10);else{const ms=sp>3?[1]:sp>1.6?[1,3]:[1,2,5];for(let e=Math.floor(lo);e<=Math.ceil(hi);e++)for(const m of ms){const v=e+Math.log10(m);if(v>=lo&&v<=hi)t.push(v)}}}
+else t=nice(lo,hi);
+return{lo,hi,log,t}}
+function yAxis(c,sc,L,T,pw,ph,fmt){const{g}=c;g.strokeStyle=c.line;g.fillStyle=c.mut;g.lineWidth=1;g.textAlign='right';g.textBaseline='middle';
+for(const v of sc.t){const y=Math.round(T+ph-(v-sc.lo)/(sc.hi-sc.lo)*ph)+.5;g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();g.fillText(fmt(sc.log?Math.pow(10,v):v),L-5,y)}}
+function empty(c,msg){c.g.fillStyle=c.mut;c.g.textAlign='center';c.g.textBaseline='middle';c.g.font='13px '+getComputedStyle(document.body).fontFamily;c.g.fillText(msg,c.w/2,c.h/2)}
+function lineChart(cv,series,o){
+const c=setup(cv);if(!c)return;const{g,w,h}=c,L=o.log?46:50,R=10,T=8,B=20,pw=w-L-R,ph=h-T-B,x1=Date.now(),x0=x1-V.win;
+let lo=Infinity,hi=-Infinity;
+for(const s of series)for(const p of s.pts){const v=p[1];if(v==null||p[0]<x0||(o.log&&v<=0))continue;if(v<lo)lo=v;if(v>hi)hi=v}
+if(lo>hi)return empty(c,o.empty||'Waiting for readings…');
+const sc=scale(lo,hi,o.log),X=t=>L+(t-x0)/(x1-x0)*pw,Y=v=>T+ph-((o.log?Math.log10(v):v)-sc.lo)/(sc.hi-sc.lo)*ph;
+yAxis(c,sc,L,T,pw,ph,o.fmt);
+const st=[15e3,30e3,60e3,120e3,300e3,600e3,9e5].find(x=>V.win/x*78<=pw)||V.win;g.textBaseline='top';
+for(let a=0;a<=V.win+1;a+=st){const x=X(x1-a),s=a/1000;g.textAlign=a==0?'right':a>=V.win?'left':'center';g.fillText(a==0?'now':(s<60?s+' s':s/60+' min')+' ago',x,T+ph+5)}
+g.save();g.beginPath();g.rect(L,T-2,pw+R,ph+4);g.clip();g.lineJoin='round';
+for(const s of series){g.strokeStyle=g.fillStyle=s.c;g.lineWidth=1.6;g.beginPath();let pt=null,lp=null;
+for(const p of s.pts){if(p[1]==null||(o.log&&p[1]<=0)){pt=null;continue}const x=X(p[0]),y=Y(p[1]);if(pt==null||p[0]-pt>25e3)g.moveTo(x,y);else g.lineTo(x,y);pt=p[0];lp=[x,y]}
+g.stroke();if(lp){g.beginPath();g.arc(lp[0],lp[1],2.6,0,7);g.fill()}}
+g.restore()}
+function barChart(cv,cur,prev,temps){
+const c=setup(cv);if(!c)return;const{g,w,h}=c,L=46,R=6,T=8,B=34,pw=w-L-R,ph=h-T-B;
+const vals=[...(cur||[]),...(prev||[])].filter(v=>v>0);
+if(!vals.length)return empty(c,'Waiting for a complete heater cycle…');
+const sc=scale(Math.min(...vals),Math.max(...vals),true);sc.lo=Math.min(sc.lo,Math.floor(sc.lo*2)/2);yAxis(c,sc,L,T,pw,ph,ohmS);
+const bw=pw/10,Y=v=>T+ph-(Math.log10(v)-sc.lo)/(sc.hi-sc.lo)*ph,col=PAL[V.sel]||c.fg;
+for(let i=0;i<10;i++){const x=L+i*bw;
+if(prev&&prev[i]>0){g.strokeStyle=c.mut;g.setLineDash([3,3]);g.lineWidth=1.2;g.strokeRect(x+bw*.1,Y(prev[i]),bw*.8,T+ph-Y(prev[i]));g.setLineDash([])}
+if(cur&&cur[i]>0){g.fillStyle=col;g.fillRect(x+bw*.24,Y(cur[i]),bw*.52,T+ph-Y(cur[i]))}
+g.fillStyle=c.mut;g.textAlign='center';g.textBaseline='top';g.fillText(i+1,x+bw/2,T+ph+4);g.fillText(temps[i]+'°',x+bw/2,T+ph+18)}}
+const stepCol=i=>'hsl('+(215-i*21)+',70%,50%)';
+
+/* ---------- rendering ---------- */
+const ST={ok:['Working','p-ok'],missing:['Not found','p-err'],lost:['Lost contact','p-err'],suspect:['Odd readings','p-warn'],sleeping:['Resting','p-ok'],inactive:['Switched off','p-mut'],unknown:['No data yet','p-mut']};
+const WHY={missing:'Has never answered. Usually its CS wire is loose or on the wrong pin.',lost:'Answered at first, then stopped. Look for a loose wire or a bad contact.',suspect:'Answers, but its readings look impossible. Could be a noisy wire or a damaged sensor.',unknown:'No reading yet.'};
+function renderStatus(){
+const ss=sensors(),probs=(S&&Array.isArray(S.problems)?S.problems:[]).filter(p=>p&&p.text);
+$('#board').textContent=S?[S.board,S.fw&&'firmware '+S.fw,S.config&&S.config.name].filter(Boolean).join(' · '):'';
+const act=ss.filter(s=>s.state!='inactive').length,nok=ss.filter(s=>s.state=='ok'||s.state=='sleeping').length,serious=probs.filter(p=>p.level!='info'),rec=!!(S&&S.recording),card=S&&S.card;
+const worst=probs.some(p=>p.level=='error')?'err':serious.length||nok<act?'warn':'ok';
+const recTxt=rec?'recording to card':'not recording';
+const title=serious.length?serious.length+(serious.length>1?' problems':' problem')+' found':nok==act?'All '+act+(act<N?' active':'')+' sensors working, '+recTxt:nok+' of '+act+' sensors working';
+const sub=serious.length||nok<act?nok+' of '+act+' sensors working, '+recTxt+'.':rec?'Writing '+(S.file||'')+'.':'Press Start on the Recording tab to save data to the SD card.';
+const cardTxt=!card?'Unknown':card.error?'Error':card.present?(num(card.free_mb)!=null?(card.free_mb/1024).toFixed(1)+' GB free':'Present'):'No card';
+html($('#verdict'),'<b>'+esc(title)+'</b><span class="mut">'+esc(sub)+'</span><div class="facts"><div>Sensors<b>'+nok+' of '+act+' OK</b></div><div>Recording<b>'+(rec?'On':'Off')+'</b></div><div>SD card<b>'+esc(cardTxt)+'</b></div><div>Board clock<b>'+(S&&S.time_set?'Set':'Not set')+'</b></div></div>');
+$('#verdict').className='verdict '+worst;
+const LV={error:'Problem',warn:'Warning',info:'Note'};
+html($('#probs'),probs.length?'<ul class="probs">'+probs.map(p=>'<li class="'+(LV[p.level]?p.level:'info')+'"><em>'+(LV[p.level]||'Note')+'</em>'+esc(p.text)+'</li>').join('')+'</ul>':'');
+html($('#tiles'),ss.map((s,i)=>{const st=ST[s.state]||ST.unknown,l=s.last,bad=s.state=='missing'||s.state=='lost';
+return'<button class="tile'+(bad?' bad':s.state=='suspect'?' sus':'')+'" data-s="'+i+'" style="--c:'+PAL[i]+'"><div class="t"><b>'+esc(s.part)+'</b><span class="pill '+st[1]+'">'+st[0]+'</span></div><div class="mut sm">sensor '+i+' · CS '+esc(s.shuttle_pin)+' → GPIO'+esc(s.gpio)+'</div>'+
+(l&&!bad?'<div class="v"><span>'+f1(l.temp,' °C')+'</span><span>'+f1(l.hum,' %')+'</span><span>'+f1(l.press,' hPa')+'</span><span>'+ohm(l.gas)+'</span></div><p class="mut">Heater stable '+(num(s.heat_stable_pct)!=null?Math.round(s.heat_stable_pct)+' %':'–')+'</p>':'<p>'+esc(WHY[s.state]||'')+'</p>')+'</button>'}).join(''));
+const badS=new Set(ss.filter(s=>!['ok','unknown','sleeping','inactive'].includes(s.state)).map(s=>s.index)),allBad=badS.size==N;
+const sh=[['P1-1','VDD (power)','3V3'],['P1-2','VDDIO (logic power)','3V3'],['P1-3','GND (ground)','GND'],['P2-2','SCK (clock)','GPIO12'],['P2-3','SDO (data from sensors)','GPIO13'],['P2-4','SDI (data to sensors)','GPIO11']];
+html($('#wire'),sh.map(r=>'<tr'+(allBad?' class="hl"':'')+'><td>'+r.join('</td><td>')+'</td></tr>').join('')+
+ss.map((s,i)=>'<tr'+(badS.has(i)?' class="hl"':'')+'><td>'+esc(s.shuttle_pin)+'</td><td>CS for '+esc(s.part)+' (sensor '+i+')'+(badS.has(i)?' <b>: check this wire</b>':'')+'</td><td>GPIO'+esc(s.gpio)+'</td></tr>').join('')+
+'<tr class="nc"><td>P2-1</td><td>not used</td><td>leave unconnected</td></tr><tr class="nc"><td>P2-9</td><td>ID chip (not needed)</td><td>leave unconnected</td></tr>');
+const sdBad=card&&(card.present===false||card.error);
+html($('#sdw'),[['CS','GPIO10'],['SCK / CLK','GPIO18'],['MOSI / DI / CMD','GPIO17'],['MISO / DO / DAT0','GPIO8'],['VCC','3V3'],['GND','GND']].map(r=>'<tr'+(sdBad&&r[1].startsWith('G')&&r[1]!='GND'?' class="hl"':'')+'><td>'+r.join('</td><td>')+'</td></tr>').join(''));
+renderRec();if(V.tab=='sensor')renderSensor();renderPick()}
+
+function renderPick(){
+html($('#legend'),WIRE.map((w,i)=>'<button class="chip" data-l="'+i+'" aria-pressed="'+V.on[i]+'" style="--c:'+PAL[i]+'"><i></i>'+w[0]+'</button>').join(''));
+html($('#spick'),WIRE.map((w,i)=>'<button class="chip" data-p="'+i+'" aria-pressed="'+(V.sel==i)+'" style="--c:'+PAL[i]+'"><i></i>'+w[0]+'</button>').join(''))}
+
+function drawGraphs(){
+const pick=(k,f)=>WIRE.map((w,i)=>({c:PAL[i],pts:V.on[i]?buf[i].filter(f||(()=>1)).map(p=>[p.t,p[k]]):[]}));
+lineChart($('#cgas'),pick('gas',V.step<0?null:p=>p.step==V.step),{log:1,fmt:ohmS,empty:'Waiting for gas readings…'});
+lineChart($('#ctemp'),pick('temp'),{fmt:v=>+v.toFixed(2)});
+lineChart($('#chum'),pick('hum'),{fmt:v=>+v.toFixed(2)});
+lineChart($('#cpress'),pick('press'),{fmt:v=>+v.toFixed(2)})}
+
+function renderSensor(){
+const s=sensors()[V.sel],l=s.last,st=ST[s.state]||ST.unknown,ck=[];
+const t=stepTemps(s);html($('#steplg'),t.map((x,i)=>'<span class="chip" style="--c:'+stepCol(i)+';cursor:default"><i></i>'+(i+1)+': '+x+' °C</span>').join(''));
+$('#shead').textContent='Health check: '+s.part+' (sensor '+V.sel+')';
+const add=(ok,t)=>ck.push('<li><span class="pill '+(ok===1?'p-ok':ok===0?'p-err':ok===2?'p-warn':'p-mut')+'">'+(ok===1?'OK':ok===0?'Fix':ok===2?'Check':'–')+'</span><span>'+t+'</span></li>');
+const wire='the wire from shuttle '+esc(s.shuttle_pin)+' to GPIO'+esc(s.gpio);
+if(s.state=='inactive'){html($('#checks'),'<li><span class="pill p-mut">–</span><span>Switched off in the board configuration ('+esc((S&&S.config||{}).source||'')+'). It is not scanned or recorded.</span></li>');return}
+if(s.state=='sleeping')add(1,'Resting between scans, as its duty cycle profile asks.');
+if(s.state=='ok'||s.state=='sleeping'){const id=num(s.chip_id);add(id==null||id==0x61?1:2,'Answers on the bus'+(id!=null?' with chip ID 0x'+id.toString(16).toUpperCase()+(id==0x61?' (correct for a BME690).':'. A BME690 should report 0x61.'):'.'))}
+else if(s.state=='missing')add(0,'Has never answered. Check '+wire+', then press Re-check sensors on the Health tab.');
+else if(s.state=='lost')add(0,'Answered at first, then went quiet. Check '+wire+' for a loose contact.');
+else if(s.state=='suspect')add(2,'Answers, but the readings look wrong. Check '+wire+'; if the wiring is fine the sensor may be damaged.');
+else add(-1,'No status from the board yet.');
+if(s.state=='missing'){html($('#checks'),ck.join('')+'<li><span class="pill p-mut">–</span><span>No readings to check until the sensor answers.</span></li>');return}
+const hs=num(s.heat_stable_pct);
+add(hs==null?-1:hs>=90?1:hs>=50?2:0,'Heater reaches its target temperature in '+(hs==null?'– ':Math.round(hs)+' % ')+'of readings ("heat-stable"). '+(hs!=null&&hs<90?'Low values mean the power supply is weak or the heater is damaged.':'Above 90 % is normal.'));
+const pl=(v,lo,hi,name,f,rg)=>{v=num(v);const ok=v>=lo&&v<=hi;add(v==null?-1:ok?1:0,name+': '+(v==null?'no reading yet.':f(v)+(ok?' looks plausible':' is impossible for this sensor')+' (possible range '+rg+').'))};
+pl(l&&l.temp,-40,85,'Temperature',v=>v.toFixed(1)+' °C','−40 to 85 °C');pl(l&&l.hum,0,100,'Humidity',v=>v.toFixed(1)+' %','0 to 100 %');pl(l&&l.press,300,1100,'Pressure',v=>v.toFixed(1)+' hPa','300 to 1100 hPa');pl(l&&l.gas,100,1e8,'Gas resistance',ohm,'100 Ω to 100 MΩ');
+const cy=num(s.cycles),cm=num(s.cycle_ms);add(cy==null?-1:cy>0?1:2,cy==null?'Heater cycle count not reported yet.':cy+' complete heater cycles so far'+(cm?' (one every '+(cm/1000).toFixed(2)+' s)':'')+'.');
+if(l&&num(l.ms)!=null&&S&&num(S.uptime_ms)!=null){const age=(S.uptime_ms-l.ms)/1000,lim=Math.max(5,(cm||10780)/1000*2);add(age<=lim?1:0,'Last reading '+Math.max(0,Math.round(age))+' s ago'+(age>lim?'. It has stopped updating.':'.'))}
+html($('#checks'),ck.join(''))}
+function drawSensor(){
+const c=cyc[V.sel],s=sensors()[V.sel];barChart($('#cfp'),c.last,c.prev,stepTemps(s));
+const b=buf[V.sel];lineChart($('#csteps'),[...Array(10)].map((_,i)=>({c:stepCol(i),pts:b.filter(p=>p.step==i).map(p=>[p.t,p.gas])})),{log:1,fmt:ohmS,empty:s.state=='ok'||s.state=='unknown'?'Waiting for readings…':'No readings from this sensor'})}
+
+function renderRec(){
+const bi=S&&S.burnin;html($('#bistate'),bi?'<b>Running.</b> '+Math.floor(bi.remaining_s/3600)+' h '+String(Math.floor(bi.remaining_s%3600/60)).padStart(2,'0')+' min left of '+esc(bi.hours)+' h.':'Not running.');$('#bistart').hidden=!!bi;$('#bistop').hidden=!bi;$('#bistart').disabled=!S;$('#cfgfile').disabled=!!bi;
+const cf=S&&S.config;html($('#cfginfo'),cf?(cf.source=='default'?'Using the factory default: <b>'+esc(cf.name||'HP-354')+'</b>.':'Using <b>'+esc(cf.name||cf.source)+'</b> from the SD card.'):'–');$('#cfgreset').disabled=!cf||cf.source=='default';
+const rec=!!(S&&S.recording),card=S&&S.card,lab=S&&S.label;
+$('#recdot').className='dot'+(rec?' on':'');$('#recstate').textContent=S?(rec?'Recording':'Not recording'):'…';
+html($('#recinfo'),rec?'Session '+esc(S.session||'–')+' · file <b>'+esc(S.file||'–')+'</b> · '+(num(S.rows_written)!=null?S.rows_written.toLocaleString():'–')+' rows written':S&&S.session?'Last session: '+esc(S.session):'');
+const b=$('#recbtn');b.textContent=rec?'Stop recording':'Start recording';b.className='btn big '+(rec?'dan':'pri');
+const noCard=!rec&&card&&(card.present===false||card.error);b.disabled=!S||!!noCard;
+$('#rechint').textContent=noCard?'No usable SD card, so recording to the card is not possible. Insert a card, or use "Record here" to save in this browser.':rec?'Files are split into 15-minute chunks automatically.':'';
+$('#curlab').textContent=lab&&lab.tag!=null?lab.tag+(lab.name||labelName(lab.tag)?' · '+(lab.name||labelName(lab.tag)):' (unnamed)'):'–';
+$('#nextbtn').disabled=!S;
+const L=S&&Array.isArray(S.labels)?S.labels.filter(Boolean):[];
+html($('#labs'),L.length?'<table><thead><tr><th>Tag</th><th>Name</th><th></th></tr></thead><tbody>'+L.map(x=>'<tr><td>'+esc(x.tag)+(lab&&lab.tag===x.tag?' <span class="pill p-ok">now</span>':'')+'</td><td>'+esc(x.name||'(unnamed)')+(x.desc?'<div class="mut sm">'+esc(x.desc)+'</div>':'')+'</td><td><button class="btn sm" data-e="'+esc(x.tag)+'">Edit</button></td></tr>').join('')+'</tbody></table>':'<p class="mut sm">No labels yet.</p>');
+if(!$('#lt').value&&lab&&lab.tag!=null)fillLab(lab.tag);
+let ci;if(!card)ci='<p class="mut">No card information from the board.</p>';
+else{const t=num(card.total_mb),f=num(card.free_mb);
+ci='<p><span class="pill '+(card.error?'p-err':card.present?'p-ok':'p-err')+'">'+(card.error?'Error':card.present?'Card present':'No card')+'</span></p>'+
+(card.present&&t?'<div class="meter"><i style="width:'+Math.min(100,Math.max(0,(t-f)/t*100)).toFixed(1)+'%"></i></div><p class="sm">'+(f/1024).toFixed(1)+' GB free of '+(t/1024).toFixed(1)+' GB. That is roughly '+(f/2.5>72?Math.round(f/60)+' days':Math.round(f/2.5)+' hours')+' of recording.</p>':'')+
+(card.error?'<p class="sm" style="color:var(--err)">'+esc(card.error)+'</p><p class="note">Try taking the card out and putting it back, or format it as FAT32 on a computer.</p>':'')+
+(!card.present&&!card.error?'<p class="note">Insert a microSD card (FAT32). Check its wiring on the Health tab if one is inserted.</p>':'')}
+html($('#cardinfo'),ci)}
+function fillLab(tag){const x=(S&&S.labels||[]).find(l=>l&&l.tag===tag)||{};$('#lt').value=tag;$('#ln').value=x.name||'';$('#ld').value=x.desc||''}
+
+async function loadFiles(){
+const el=$('#flist');let f;
+try{f=await api('GET','/api/files')}catch(e){html(el,'<p class="mut">Could not read the file list: '+esc(e.message)+'</p>');return}
+f=(Array.isArray(f)?f:[]).filter(x=>x&&x.name);if(!f.length){html(el,'<p class="mut">No recordings on the card yet.</p>');return}
+const G={};for(const x of f){const st=x.name.replace(/\.[^.]*$/,''),k=st.lastIndexOf('_'),s=k>0?st.slice(0,k):st;(G[s]=G[s]||[]).push(x)}
+html(el,Object.keys(G).sort().reverse().map(s=>{const a=G[s].sort((p,q)=>p.name.replace('rawdata','a')<q.name.replace('rawdata','a')?-1:1),tot=a.reduce((n,x)=>n+(+x.size||0),0),ch=a.filter(x=>/\.bmerawdata$/.test(x.name)).length;
+return'<h3>Session '+esc(s)+' <span class="mut sm">· '+ch+' chunk'+(ch==1?'':'s')+' · '+bytes(tot)+'</span></h3>'+a.map(x=>{const live=S&&S.recording&&S.file==x.name;
+return'<div class="frow"><div><code>'+esc(x.name)+'</code><div class="mut sm">'+bytes(x.size)+(live?' · being written now':'')+'</div></div><div class="row"><a class="btn sm" href="/api/files/'+encodeURIComponent(x.name)+'" download="'+esc(x.name)+'" data-dl="'+esc(x.name)+'">Download</a><button class="btn sm" data-del="'+esc(x.name)+'"'+(live?' disabled title="Stop recording first"':'')+'>Delete</button></div></div>'}).join('')}).join(''))}
+
+/* inline confirm */
+function confirmUI(after,text,yes,fn){$$('.confirm').forEach(e=>e.remove());const d=document.createElement('div');d.className='confirm';
+d.innerHTML='<p>'+text+'</p><div class="row"><button class="btn dan">'+yes+'</button><button class="btn">Cancel</button></div>';
+const[b1,b2]=d.querySelectorAll('button');b2.onclick=()=>d.remove();b1.onclick=()=>{d.remove();fn()};after.after(d);b2.focus()}
+
+/* ---------- browser recording ---------- */
+const COLS=[['Sensor Index','','integer','sensor_index'],['Sensor ID','','integer','sensor_id'],['Time Since PowerOn','Milliseconds','integer','timestamp_since_poweron'],['Real time clock','Unix seconds (UTC)','integer','real_time_clock'],['Temperature','DegreesCelcius','float','temperature'],['Pressure','Hectopascals','float','pressure'],['Relative Humidity','Percent','float','relative_humidity'],['Resistance Gassensor','Ohms','float','resistance_gassensor'],['Heater Profile Step Index','','integer','heater_profile_step_index'],['Scanning Mode Enabled','','boolean','scanning_mode_enabled'],['Label Tag','','integer','label_tag'],['Error Code','','integer','error_code']].map(c=>({name:c[0],unit:c[1],format:c[2],key:c[3]}));
+const BR={on:false,rows:[],t0:0,t1:0,cfg:null,gaps:0,out:null,
+add(m){const ok=[m.temp,m.press,m.hum,m.gas].every(v=>num(v)!=null);
+this.rows.push([m.s,m.s,Math.round(+m.ms||0),Math.floor(Date.now()/1000),ok?m.temp:0,ok?m.press:0,ok?m.hum:0,ok?m.gas:0,m.step|0,true,num(m.tag)!=null?m.tag:0,ok?0:1])}};
+async function brStart(){
+let c;try{c=await api('GET','/api/config')}catch(e){toast('Could not read the heater settings from the board: '+e.message,1);return}
+if(!c||!c.configBody){toast('The board sent no heater settings, cannot record.',1);return}
+CFG=c;Object.assign(BR,{on:true,rows:[],t0:Date.now(),cfg:c,gaps:0,out:null,wasLive:conn=='live'});html($('#bout'),'');renderBrec()}
+function brStop(){
+BR.on=false;BR.t1=Date.now();const now=new Date(),iso=now.toISOString(),c=BR.cfg;
+const stamp=iso.slice(0,19).replace(/[-:]/g,'').replace('T','-');
+/* hyphens, not underscores: a name ending _<number> would make AI-Studio treat it as part of a multi-file session */
+const name='browser-'+(S&&S.board||'bme690').replace(/[^A-Za-z0-9-]/g,'')+'-'+stamp;
+const file={configHeader:Object.assign({},c.configHeader,{boardType:'board_690',dateCreated:iso}),configBody:c.configBody,
+rawDataHeader:{counterPowerOnOff:1,seedPowerOnOff:'',counterFileLimit:1,dateCreated:iso,firmwareVersion:S&&S.fw||'',boardId:S&&S.board||''},
+rawDataBody:{dataColumns:COLS,dataBlock:BR.rows}};
+const labs={labelInformation:(S&&S.labels||[]).filter(Boolean).map(l=>({labelTag:l.tag,labelName:l.name||'',labelDescription:l.desc||''}))};
+BR.out={name,raw:new Blob([JSON.stringify(file)],{type:'application/json'}),lab:new Blob([JSON.stringify(labs,null,1)],{type:'application/json'}),n:BR.rows.length};
+BR.rows=[];
+html($('#bout'),'<div class="card" style="margin:14px 0 0;background:var(--okb)"><p style="margin-top:0"><b>Recording finished:</b> '+BR.out.n.toLocaleString()+' rows. Download both files and keep them in the same folder, then use Import in AI-Studio on the .bmerawdata file.</p><div class="row"><button class="btn pri" data-bd="raw">Download '+esc(name)+'.bmerawdata</button><button class="btn" data-bd="lab">Download .bmelabelinfo</button></div><p class="note">A few incomplete heater cycles at the start and end are normal; AI-Studio drops them.</p></div>');renderBrec()}
+function save(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)}
+function renderBrec(){
+const n=BR.on?BR.rows.length:BR.out?BR.out.n:0;$('#bstate').textContent=BR.on?'Recording':BR.out?'Finished':'Not recording';
+$('#belap').textContent=dur(BR.on?Date.now()-BR.t0:BR.out?BR.t1-BR.t0:0);$('#brows').textContent=n.toLocaleString();$('#bsize').textContent=bytes(n*95);
+const b=$('#bbtn');b.textContent=BR.on?'Stop and save':'Start recording in browser';b.className='btn big '+(BR.on?'dan':'pri');
+if(BR.on&&conn!='live')BR.gaps=1;
+$('#bwarn').style.color=BR.on&&conn!='live'?'var(--warn)':'';$('#bwarn').textContent=BR.on&&conn!='live'?'Live link lost: readings are being missed until it reconnects.':BR.gaps?'The live link dropped during this recording, so some readings are missing.':conn=='live'||BR.on?'':'Recording needs the live link (green dot at the top).';
+b.disabled=!BR.on&&conn!='live'}
+
+/* ---------- tabs & events ---------- */
+function show(t){if(!$('#t-'+t))t='health';V.tab=t;$$('nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t==t));$$('main>section').forEach(s=>s.hidden=s.id!='t-'+t);
+if(location.hash.slice(1)!=t)history.replaceState(null,'','#'+t);if(t=='files')loadFiles();if(t=='sensor')renderSensor();frame()}
+function frame(){trim();if(V.tab=='graphs')drawGraphs();else if(V.tab=='sensor')drawSensor();else if(V.tab=='brec')renderBrec()}
+document.addEventListener('click',async e=>{const t=e.target.closest('button,a');if(!t)return;const d=t.dataset;
+if(d.t)show(d.t);
+else if(d.s!=null){V.sel=+d.s;renderPick();show('sensor')}
+else if(d.l!=null){V.on[+d.l]=!V.on[+d.l];renderPick();frame()}
+else if(d.p!=null){V.sel=+d.p;renderPick();renderSensor();frame()}
+else if(d.w){V.win=d.w*60e3;$$('#win button').forEach(b=>b.setAttribute('aria-pressed',b==t));frame()}
+else if(d.e!=null){fillLab(+d.e);$('#ln').focus()}
+else if(d.bd&&BR.out)save(BR.out[d.bd],BR.out.name+(d.bd=='raw'?'.bmerawdata':'.bmelabelinfo'));
+else if(d.dl&&MOCK){e.preventDefault();save(new Blob([mock.file(d.dl)],{type:'application/json'}),d.dl)}
+else if(d.del){const n=d.del;confirmUI(t.closest('.frow'),'Delete <b>'+esc(n)+'</b> from the card? This cannot be undone.'+(/rawdata$/.test(n)?' Delete its .bmelabelinfo too if you no longer need this chunk.':''),'Delete',async()=>{
+try{await api('DELETE','/api/files/'+encodeURIComponent(n));toast('Deleted '+n)}catch(er){toast('Could not delete: '+er.message,1)}loadFiles()})}});
+$('#rescan').onclick=()=>confirmUI($('#rescan').parentNode,'Re-checking probes all eight sensors again and restarts their heater cycles. Measurements pause for a few seconds and the graphs will show a short gap.','Re-check now',async()=>{
+try{await post('/api/rescan',null,'Re-checking sensors…');cyc.forEach(c=>{c.cur=[];c.ls=-1});loadCfg()}catch(e){}});
+$('#recbtn').onclick=async()=>{const on=!(S&&S.recording);$('#recbtn').disabled=true;try{await post('/api/record',{on},on?'Recording started':'Recording stopped')}catch(e){}renderRec();if(V.tab=='files')loadFiles()};
+$('#cfgfile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+if(f.size>32768){toast('That file is too big to be a board configuration.',1);return}
+let txt;try{txt=await f.text();JSON.parse(txt)}catch(er){toast('That file is not a board configuration (.bmeconfig).',1);return}
+toast('Sending '+f.name+'…');
+try{let j;if(MOCK)j=await mock.api('PUT','/api/config',{name:f.name});else{const rr=await fetch('/api/config?name='+encodeURIComponent(f.name),{method:'PUT',body:txt});try{j=await rr.json()}catch(x){}if(!rr.ok||(j&&j.error))throw new Error(j&&j.error?j.error:'The board answered HTTP '+rr.status)}
+if(j&&j.sensors)onStatus(j);CFG=null;loadCfg();toast('Now using '+f.name)}catch(er){toast(er.message,1)}};
+$('#cfgreset').onclick=()=>confirmUI($('#cfgreset').parentNode,'Go back to the factory default heater profile (HP-354 on all eight sensors)? The configuration file is removed from the SD card, and a recording in progress starts a new session.','Use the default',async()=>{try{const j=await api('DELETE','/api/config');if(j&&j.sensors)onStatus(j);CFG=null;loadCfg();toast('Back to the factory default')}catch(er){toast(er.message,1)}});
+$('#bistart').onclick=()=>{const h=parseFloat($('#bihours').value);if(!(h>=1&&h<=168)){toast('Choose between 1 and 168 hours.',1);return}
+confirmUI($('#bistart').parentNode,'Start a '+h+'-hour burn-in? All eight sensors switch to the stabilization profile, and a recording in progress starts a new session.','Start burn-in',()=>post('/api/burnin',{on:true,hours:h},'Burn-in started').catch(()=>{}))};
+$('#bistop').onclick=()=>confirmUI($('#bistop').parentNode,'Stop the burn-in early and return to the normal heater profile?','Stop burn-in',()=>post('/api/burnin',{on:false},'Burn-in stopped').catch(()=>{}));
+$('#nextbtn').onclick=async()=>{try{const j=await post('/api/label',{next:true});const l=j&&j.label;toast(l?'Now on label '+l.tag+(l.name?' · '+l.name:''):'Next label')}catch(e){}};
+$('#labform').onsubmit=async e=>{e.preventDefault();const tag=parseInt($('#lt').value,10);if(!(tag>=1)){toast('The tag must be a whole number, 1 or more.',1);return}
+try{await post('/api/label',{tag,name:$('#ln').value.trim(),desc:$('#ld').value.trim()},'Saved label '+tag)}catch(_){}};
+$('#frefresh').onclick=loadFiles;
+$('#bbtn').onclick=()=>BR.on?brStop():brStart();
+$('#stepsel').onchange=e=>{V.step=+e.target.value;frame()};
+addEventListener('beforeunload',e=>{if(BR.on){e.preventDefault();e.returnValue='Browser recording in progress'}});
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+addEventListener('resize',()=>frame());
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{palette();$$('[style*="--c"]').forEach(e=>e._h=null);for(const id of['tiles','legend','spick'])$('#'+id)._h=null;renderStatus();frame()});
+setInterval(()=>{frame();if(conn=='live'&&Date.now()-lastMsg>8000&&ws)try{ws.close()}catch(_){}},1000);
+
+/* ---------- mock board (file:// or ?mock=1) ---------- */
+const mock=MOCK&&(()=>{
+const boot=Date.now()-3.6e6,up=()=>Date.now()-boot,off=[1,.62,1.45,.85,1.7,1.12,1,.74],sf=[1,.8,1,1.18,.92,1,1.05,.96,1,1.02];
+let tset=false,toff=0,rec=false,rows=0,sess=7,chunk=0,tag=1,step=0,sock=null,hold=0;
+const labels=[{tag:1,name:'air',desc:'room air'},{tag:2,name:'coffee',desc:'fresh ground, 5 cm away'}];
+const files=[['s0006_0000.bmerawdata',2841223],['s0006_0000.bmelabelinfo',142],['s0006_0001.bmerawdata',1203114],['s0006_0001.bmelabelinfo',142],['s0007_0000.bmerawdata',2840011],['s0007_0000.bmelabelinfo',180]].map(([name,size])=>({name,size}));
+const card={present:true,total_mb:14893,free_mb:13859,error:null};
+const sen=WIRE.map((w,i)=>({index:i,part:w[0],shuttle_pin:w[1],gpio:w[2],state:i==6?'missing':'ok',chip_id:i==6?0:97,par_t1:i==6?0:22400+i*53,heater_profile:'heater_354',cycle_ms:10780,cycles:i==6?0:330,heat_stable_pct:i==6?0:99.2+i*.08,last:null}));
+const cl=o=>JSON.parse(JSON.stringify(o)),fname=()=>'s'+String(sess).padStart(4,'0')+'_'+String(chunk).padStart(4,'0');
+const status=()=>({fw:'2.0.0',board:'BME690-3F2A',uptime_ms:up(),time_set:tset,unix:Math.floor(tset?Date.now()/1000+toff:up()/1000),recording:rec,session:'s'+String(sess).padStart(4,'0'),file:rec?fname()+'.bmerawdata':null,rows_written:rows,
+label:{tag,name:(labels.find(l=>l.tag==tag)||{}).name||''},labels:cl(labels),card:Object.assign({},card),config:mcfg,burnin:mbi,wifi:{ssid:'BME690-3F2A',clients:1},
+sensors:cl(sen),problems:[{level:'error',sensor:6,text:'Sensor 6 (U7) is not answering. Check the wire from shuttle P2-7 to GPIO15.'}].concat(tset?[]:[{level:'info',sensor:null,text:'The board clock is not set yet. This page sets it automatically.'}])});
+const send=o=>{if(sock&&sock.readyState==1)sock.onmessage({data:JSON.stringify(o)})};
+const push=()=>send(Object.assign({t:'status'},status()));
+function tick(){const T=HP354[step][0],t=up();
+if(Date.now()>hold)sen.forEach((s,i)=>{if(s.state!='ok')return;
+const g=Math.pow(10,6.55-(T-100)*1.9/220)*off[i]*sf[step]*(1+.15*Math.sin(t/9e4+i))*(tag==2?.55:1)*(1+(Math.random()-.5)*.03);
+const d={s:i,ms:t,temp:+(31+i*.07+.3*Math.sin(t/6e4)+(Math.random()-.5)*.02).toFixed(2),press:+(1012.6+.1*Math.sin(t/2e5)+(Math.random()-.5)*.02).toFixed(2),hum:+(35.2+i*.1+.6*Math.sin(t/8e4)+(Math.random()-.5)*.05).toFixed(2),gas:+g.toFixed(1),step,stable:Math.random()>.01,tag};
+s.last={ms:d.ms,temp:d.temp,press:d.press,hum:d.hum,gas:d.gas,step,stable:d.stable};if(step==9)s.cycles++;
+send(Object.assign({t:'d'},d));if(rec){rows++;const f=files.find(x=>x.name==fname()+'.bmerawdata');if(f)f.size+=96}});
+step=(step+1)%10;setTimeout(tick,HP354[step][1]*140)}
+setTimeout(tick,300);setInterval(push,2000);
+let mcfg={source:'default',name:'HP-354 continuous'},mbi=null;
+function h(m,p,b){b=b||{};
+if(p=='/api/config'&&m=='PUT'){mcfg={source:b.name,name:b.name};return status()}
+if(p=='/api/config'&&m=='DELETE'){mcfg={source:'default',name:'HP-354 continuous'};return status()}
+if(p=='/api/status')return status();
+if(p=='/api/config')return{configHeader:{dateCreated:new Date(boot).toISOString(),appVersion:'bme690-logger 2.0.0',boardType:'board_690',boardMode:'burn_in',boardLayout:''},configBody:{heaterProfiles:[{id:'heater_354',timeBase:140,temperatureTimeVectors:HP354}],dutyCycleProfiles:[{id:'duty_1',numberScanningCycles:1,numberSleepingCycles:0}],sensorConfigurations:WIRE.map((w,i)=>({sensorIndex:i,active:true,heaterProfile:'heater_354',dutyCycleProfile:'duty_1'}))}};
+if(p=='/api/files')return files.map(f=>Object.assign({},f));
+if(p.startsWith('/api/files/')&&m=='DELETE'){const n=decodeURIComponent(p.slice(11)),k=files.findIndex(f=>f.name==n);if(k<0)throw new Error('no such file');files.splice(k,1);return{ok:true}}
+if(m!='POST')throw new Error('not found');
+if(p=='/api/burnin'){mbi=b.on?{hours:b.hours,remaining_s:b.hours*3600}:null}
+else if(p=='/api/time'){tset=true;toff=b.unix-Date.now()/1000}
+else if(p=='/api/record'){if(b.on&&!rec){sess++;chunk=0;rows=0;files.push({name:fname()+'.bmerawdata',size:1450},{name:fname()+'.bmelabelinfo',size:150})}rec=!!b.on}
+else if(p=='/api/label'){if(b.next){tag++;if(!labels.find(l=>l.tag==tag))labels.push({tag,name:'',desc:''})}else{if(!(b.tag>=0))throw new Error('bad tag');tag=b.tag;const l=labels.find(x=>x.tag==tag);if(l){l.name=b.name||'';l.desc=b.desc||''}else labels.push({tag,name:b.name||'',desc:b.desc||''});labels.sort((a,c)=>a.tag-c.tag)}}
+else if(p=='/api/rescan'){hold=Date.now()+3000;sen.forEach(s=>{if(s.state=='ok')s.last=null})}
+else throw new Error('not found');
+const st=status();setTimeout(push,50);return st}
+return{api:(m,p,b)=>new Promise((ok,no)=>setTimeout(()=>{try{ok(h(m,p,b))}catch(e){no(e)}},120)),
+sock(){const s={readyState:0,onopen:null,onmessage:null,onclose:null,onerror:null,close(){if(s.readyState==3)return;s.readyState=3;if(sock===s)sock=null;setTimeout(()=>s.onclose&&s.onclose(),0)}};
+sock=s;setTimeout(()=>{s.readyState=1;s.onopen&&s.onopen();push()},200);return s},
+drop(){if(sock)sock.close()},
+file:n=>/labelinfo$/.test(n)?JSON.stringify({labelInformation:labels.map(l=>({labelTag:l.tag,labelName:l.name,labelDescription:l.desc}))}):JSON.stringify({note:'Demo file: a real board sends the recorded .bmerawdata here.'})}})();
+if(MOCK)window.__mock=mock;
+
+/* ---------- start ---------- */
+palette();
+$('#demo').hidden=!MOCK;
+stepOpts();
+$$('#win button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.w*60e3==V.win));
+setConn('off');renderStatus();connect();startPoll();loadCfg();show(location.hash.slice(1)||'health');
+</script>
+</body>
+</html>

@@ -18,9 +18,16 @@ undocumented. This repository fills those gaps.
 | **[`.bmerawdata` format spec](docs/bmerawdata-format.md)** | The undocumented format AI-Studio imports, reverse-engineered and verified |
 | **[Hardware notes](docs/hardware-notes.md)** | AB3.1 + shuttle pinout, flash layout, and the traps that cost days |
 | **[AI-Studio on Linux](scripts/rebuild-aistudio-linux.sh)** | Turns Bosch's Windows release into a native Linux install |
-| **`firmware/`** | Standalone board firmware — in progress, see [roadmap](#roadmap) |
+| **[ESP32-S3 firmware](firmware/bme690-logger-idf/)** | Runs the shuttle from a cheap ESP32-S3 with no Application Board: records AI-Studio files to SD, WiFi dashboard, plain-English wiring diagnosis |
 
 ## Quick start
+
+**No Application Board?** Wire the shuttle to an ESP32-S3 DevKitC and follow
+**[firmware/bme690-logger-idf](firmware/bme690-logger-idf/)**. That is the
+easiest way in, and what most people should use.
+
+The rest of this section drives the shuttle on Bosch's Application Board 3.1
+from a PC.
 
 Hardware: a **BME690 8x shuttle board** on a **Bosch Application Board 3.1**,
 running the stock `coines_bridge` firmware (how it ships), connected by USB.
@@ -83,7 +90,7 @@ bme690 read -n 5 -i 2        forced-mode measurements
 bme690 profiles              heater and duty cycle profiles AI-Studio knows
 bme690 record -o F [...]     record a scan to .bmerawdata
 bme690 burn-in --hours 12    stabilise the sensors
-bme690 ingest -o F --port P  convert the nRF52840 logger's output to .bmerawdata
+bme690 ingest -o F --port P  convert the ESP32-S3 logger's USB output to .bmerawdata
 ```
 
 ### Two capture paths, one file format
@@ -91,17 +98,17 @@ bme690 ingest -o F --port P  convert the nRF52840 logger's output to .bmerawdata
 | path | hardware | command |
 |---|---|---|
 | USB, host-driven | shuttle on an Application Board 3.1 | `bme690 record` |
-| standalone firmware | shuttle on any nRF52840 | `bme690 ingest` |
+| standalone firmware | shuttle on an ESP32-S3 | none: files are written to the SD card; or `bme690 ingest` over USB |
 
 Both produce identical `.bmerawdata`, so captures from either import into the
 same AI-Studio project.
 
 ```bash
-# stream from the nRF52840 logger straight into a labelled capture
-bme690 ingest --port /dev/ttyACM0 -o coffee.bmerawdata --labels "coffee:300,air:300"
+# stream from the ESP32-S3 logger straight into a labelled capture
+bme690 ingest --port /dev/ttyUSB0 -o coffee.bmerawdata --labels "coffee:300,air:300"
 
 # or convert a log you captured earlier
-cat /dev/ttyACM0 > run.txt
+cat /dev/ttyUSB0 > run.txt
 bme690 ingest --from-file run.txt -o coffee.bmerawdata
 ```
 
@@ -144,6 +151,7 @@ You supply Bosch's Windows release; the script contains no Bosch code.
 
 | board | interface | tooling |
 |---|---|---|
+| **BME690 8x shuttle** on an ESP32-S3 DevKitC | SD card, WiFi dashboard, USB | [firmware/bme690-logger-idf](firmware/bme690-logger-idf/) |
 | **BME690 8x shuttle** on Application Board 3.1 | USB (COINES bridge) | `bme690`, this repo |
 | **BME688 Development Kit** (8 sensors on ESP32) | SD card + BLE | AI-Studio board config + Bosch's mobile app |
 
@@ -154,20 +162,20 @@ the other.
 
 ## Roadmap
 
-The AB3.1 has 256 MB of onboard NAND flash, two freely programmable buttons, a
-battery connector and BLE — everything needed to run untethered. Bosch ship
-the building blocks but no finished application. That is what `firmware/` is
-for:
+The ESP32-S3 firmware does what the Application Board was meant to do:
 
-- [ ] Standalone scan, logging `.bmerawdata` to onboard flash
-- [ ] Buttons and RGB LED — S1 start/stop, S2 cycle the label tag
-- [ ] Retrieval over USB MTP
+- [x] Standalone scan, logging `.bmerawdata` to an SD card
+- [x] Button and RGB LED: next sample label, start/stop
+- [x] Retrieval by card reader or WiFi download
+- [x] Heater profiles and duty cycles from AI-Studio `.bmeconfig` files
+- [x] Wiring and sensor diagnosis in plain English
+- [x] Built-in burn-in (Bosch HP-001)
+- [ ] Flash from the browser, so no toolchain is needed
 - [ ] Battery operation
-- [ ] BLE service: profiles down, data up
-- [ ] Phone app for field capture
+- [ ] BLE service and a phone app for field capture
 
-Reversible throughout — the stock firmware and its update script are in the
-COINES SDK.
+`firmware/bme690-logger` is an earlier Zephyr build for a bare nRF52840. It is
+no longer maintained and is kept for reference.
 
 ## Licensing
 

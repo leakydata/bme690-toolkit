@@ -3,9 +3,25 @@
 CONFIG_ESP_CONSOLE_UART_DEFAULT=y
 CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG=y
 
+# Every DevKitC-1 has at least 8 MB of flash; WiFi and the web server need
+# more than the default 1 MB app partition.
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+
 # The compensation path is double-precision in Bosch's reference; keep printf
 # able to render it.
 CONFIG_NEWLIB_STDOUT_LINE_ENDING_LF=y
 
 CONFIG_ESP_TASK_WDT_EN=n
 CONFIG_FREERTOS_HZ=1000
+
+# Dashboard live data.
+CONFIG_HTTPD_WS_SUPPORT=y
+CONFIG_HTTPD_MAX_REQ_HDR_LEN=1024
+
+# Long file names on the card (s0007_0000.bmerawdata).
+CONFIG_FATFS_LFN_HEAP=y
+CONFIG_FATFS_MAX_LFN=255
+
+# Startup builds the first recording header on the main task.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
