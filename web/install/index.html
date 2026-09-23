@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BME690 Logger Installer</title>
+<meta name="description" content="Install the BME690 8x shuttle logger firmware on an ESP32-S3 from your browser. No software to install.">
+<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+<style>
+:root {
+  --bg: #f7f7f5; --panel: #ffffff; --text: #1d1f21; --muted: #5d6166;
+  --line: #e2e2de; --accent: #1f6feb; --accent-text: #ffffff;
+  --ok: #1a7f37; --warn-bg: #fff8e5; --warn-line: #d4a72c; --code-bg: #f0f0ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111315; --panel: #1a1d20; --text: #e6e6e3; --muted: #9ba1a6;
+    --line: #2c3035; --accent: #4c8dff; --accent-text: #0b0d0f;
+    --ok: #3fb950; --warn-bg: #2a2410; --warn-line: #9e7c1c; --code-bg: #23272b;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 8px; }
+h2 { font-size: 1.2rem; margin: 0 0 10px; }
+.lede { color: var(--muted); margin: 0 0 28px; font-size: 1.05rem; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  padding: 20px; margin: 0 0 16px;
+}
+.step { display: grid; grid-template-columns: 2.2rem 1fr; gap: 0 12px; }
+.num {
+  width: 2rem; height: 2rem; border-radius: 50%; background: var(--accent);
+  color: var(--accent-text); display: grid; place-items: center; font-weight: 700;
+}
+.step p { margin: 0 0 8px; }
+.step p:last-child { margin-bottom: 0; }
+.install { margin: 14px 0 6px; }
+esp-web-install-button button[slot="activate"], .btn {
+  font: inherit; font-weight: 650; font-size: 1.05rem; cursor: pointer;
+  background: var(--accent); color: var(--accent-text); border: 0;
+  border-radius: 10px; padding: 12px 22px;
+}
+.warn {
+  background: var(--warn-bg); border-left: 4px solid var(--warn-line);
+  border-radius: 8px; padding: 12px 14px; margin: 10px 0 0;
+}
+.muted { color: var(--muted); }
+.small { font-size: 0.92rem; }
+code, kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em; background: var(--code-bg); border-radius: 4px; padding: 1px 5px;
+}
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; }
+td:last-child { font-variant-numeric: tabular-nums; }
+.scroll { overflow-x: auto; }
+details { margin: 10px 0 0; }
+summary { cursor: pointer; font-weight: 600; }
+a { color: var(--accent); }
+footer { color: var(--muted); font-size: 0.9rem; margin-top: 28px; }
+</style>
+</head>
+<body>
+<main>
+<h1>BME690 Logger installer</h1>
+<p class="lede">Put the logger firmware on an ESP32-S3 DevKitC straight from this page.
+It runs a Bosch BME690 8x shuttle board without an Application Board: it records all
+eight sensors to a microSD card as BME AI-Studio files and shows live graphs on its own
+WiFi network. You don't need to install anything.</p>
+
+<div class="card step">
+  <div class="num">1</div>
+  <div>
+    <h2>Plug in the board</h2>
+    <p>Connect the ESP32-S3 DevKitC to this computer with a USB-C cable that carries data
+    (some cables only charge). The board has two USB-C ports; either works. The one
+    labelled <b>USB</b> needs no driver on any system.</p>
+    <p class="muted small">Wire the shuttle before or after installing, it doesn't matter.
+    The wiring table is further down.</p>
+  </div>
+</div>
+
+<div class="card step">
+  <div class="num">2</div>
+  <div>
+    <h2>Install</h2>
+    <p>Click the button, pick the board's port from the list, and confirm. It takes about a
+    minute. Choose <b>Erase</b> if you're asked; it removes whatever was on the board before.</p>
+    <div class="install">
+      <esp-web-install-button manifest="manifest.json">
+        <button slot="activate">Install BME690 Logger</button>
+        <div slot="unsupported" class="warn">This browser can't talk to USB devices. Open
+        this page in <b>Chrome</b> or <b>Edge</b> on a computer (Windows, macOS or Linux).
+        Phones, Firefox and Safari can't install firmware.</div>
+        <div slot="not-allowed" class="warn">Installing needs a secure page. Open it at its
+        <code>https://</code> address.</div>
+      </esp-web-install-button>
+    </div>
+    <p class="muted small" id="ver"></p>
+  </div>
+</div>
+
+<div class="card step">
+  <div class="num">3</div>
+  <div>
+    <h2>Open the dashboard</h2>
+    <p>After installing, press the board's <kbd>RST</kbd> button. On your phone or laptop,
+    join the WiFi network <b>BME690-XXXX</b> (no password). The dashboard opens by itself.
+    If it doesn't, go to <b>http://192.168.4.1</b>.</p>
+    <p>Its <b>Health</b> tab checks every sensor and tells you in plain English which wire to
+    look at if one isn't answering.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Wiring</h2>
+  <p class="small">The shuttle's <b>P1</b> row has 7 pins and <b>P2</b> has 9, at 1.27 mm
+  pitch. Pin 1 of each row is marked on the board. <b>Never connect 5V to the shuttle.</b></p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Shuttle pin</th><th>Signal</th><th>ESP32-S3</th></tr></thead>
+    <tbody>
+      <tr><td>P1-1</td><td>VDD (power)</td><td>3V3</td></tr>
+      <tr><td>P1-2</td><td>VDDIO (logic power)</td><td>3V3</td></tr>
+      <tr><td>P1-3</td><td>GND</td><td>GND</td></tr>
+      <tr><td>P1-4</td><td>Sensor U1 select</td><td>GPIO1</td></tr>
+      <tr><td>P1-5</td><td>Sensor U2 select</td><td>GPIO2</td></tr>
+      <tr><td>P1-6</td><td>Sensor U3 select</td><td>GPIO4</td></tr>
+      <tr><td>P1-7</td><td>Sensor U4 select</td><td>GPIO5</td></tr>
+      <tr><td>P2-1</td><td>not used</td><td>–</td></tr>
+      <tr><td>P2-2</td><td>SCK</td><td>GPIO12</td></tr>
+      <tr><td>P2-3</td><td>SDO (data from sensors)</td><td>GPIO13</td></tr>
+      <tr><td>P2-4</td><td>SDI (data to sensors)</td><td>GPIO11</td></tr>
+      <tr><td>P2-5</td><td>Sensor U5 select</td><td>GPIO6</td></tr>
+      <tr><td>P2-6</td><td>Sensor U6 select</td><td>GPIO7</td></tr>
+      <tr><td>P2-7</td><td>Sensor U7 select</td><td>GPIO15</td></tr>
+      <tr><td>P2-8</td><td>Sensor U8 select</td><td>GPIO16</td></tr>
+      <tr><td>P2-9</td><td>not used</td><td>–</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="small" style="margin-top:14px">Optional microSD module, on its own pins:
+  CS&nbsp;GPIO10, SCK&nbsp;GPIO18, MOSI&nbsp;GPIO17, MISO&nbsp;GPIO8, plus GND and power
+  (5V if the module has a regulator chip, otherwise 3V3). Format the card as FAT32.</p>
+</div>
+
+<div class="card">
+  <h2>If something goes wrong</h2>
+  <details>
+    <summary>The board isn't in the list of ports</summary>
+    <p class="small">Try a different cable first, because many only charge. Then try the
+    board's other USB port. On Windows or macOS, the port labelled <b>UART</b> needs the
+    CH340 or CP210x driver, whichever chip your board has; the port labelled <b>USB</b>
+    never does. On Linux, if the port appears but won't open, add yourself to the
+    <code>dialout</code> group and log in again.</p>
+  </details>
+  <details>
+    <summary>It hangs on "Connecting" or fails partway</summary>
+    <p class="small">Put the board in download mode by hand: hold <kbd>BOOT</kbd>, press and
+    release <kbd>RST</kbd>, then release <kbd>BOOT</kbd>. Click Install again. Close any
+    other program using the port, such as the Arduino serial monitor.</p>
+  </details>
+  <details>
+    <summary>The WiFi network doesn't appear</summary>
+    <p class="small">Press <kbd>RST</kbd> once after installing. The network is called
+    <b>BME690-</b> followed by four characters, and it only works on 2.4 GHz WiFi, which
+    every phone supports.</p>
+  </details>
+  <details>
+    <summary>I want to see what the board is doing</summary>
+    <p class="small">Click Install again and choose <b>Logs &amp; Console</b>. The board prints
+    its sensor check at start-up; type <code>help</code> for its commands.</p>
+  </details>
+</div>
+
+<footer>
+  <p>Source, full documentation and the file format AI-Studio uses:
+  <a href="https://github.com/leakydata/bme690-toolkit">github.com/leakydata/bme690-toolkit</a>.
+  Not affiliated with Bosch Sensortec.</p>
+</footer>
+</main>
+<script>
+fetch('manifest.json').then(r => r.json()).then(m => {
+  document.getElementById('ver').textContent = 'Firmware version ' + m.version + '.';
+}).catch(() => {});
+</script>
+</body>
+</html>

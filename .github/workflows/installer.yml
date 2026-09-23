@@ -1,0 +1,64 @@
+# Builds the ESP32-S3 firmware and publishes the browser installer to GitHub
+# Pages, so the Install button always serves the firmware on main.
+name: Browser installer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "firmware/bme690-logger-idf/**"
+      - "firmware/common/**"
+      - "web/install/**"
+      - ".github/workflows/installer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build firmware
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.5.4
+          target: esp32s3
+          path: firmware/bme690-logger-idf
+          command: idf.py build && idf.py merge-bin -o merged.bin
+
+      - name: Assemble site
+        run: |
+          set -eu
+          fw=firmware/bme690-logger-idf
+          version=$(sed -n 's/^#define FW_VERSION *"\(.*\)"/\1/p' "$fw/main/board.h")
+          mkdir -p site
+          cp web/install/index.html site/
+          sudo cp "$fw/build/merged.bin" site/bme690-logger-esp32s3.bin
+          sudo chown "$(id -u)" site/bme690-logger-esp32s3.bin
+          sed "s/\"version\": \"dev\"/\"version\": \"$version (${GITHUB_SHA::7})\"/" \
+            web/install/manifest.json > site/manifest.json
+          ls -la site
+          cat site/manifest.json
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -70,7 +70,14 @@ on the dashboard after each one.
 
 ## Install
 
-With [ESP-IDF v5.5](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/get-started/)
+**The easy way:** open
+**[leakydata.github.io/bme690-toolkit](https://leakydata.github.io/bme690-toolkit/)**
+in Chrome or Edge on a computer, plug in the board and click **Install**. You
+don't need a toolchain or drivers. The page always carries the latest firmware
+from this repository; a GitHub Action (`.github/workflows/installer.yml`)
+rebuilds it on every change.
+
+**From source**, with [ESP-IDF v5.5](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/get-started/)
 installed:
 
 ```bash

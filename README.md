@@ -22,9 +22,12 @@ undocumented. This repository fills those gaps.
 
 ## Quick start
 
-**No Application Board?** Wire the shuttle to an ESP32-S3 DevKitC and follow
-**[firmware/bme690-logger-idf](firmware/bme690-logger-idf/)**. That is the
-easiest way in, and what most people should use.
+**No Application Board?** Wire the shuttle to an ESP32-S3 DevKitC and install
+the firmware from your browser at
+**[leakydata.github.io/bme690-toolkit](https://leakydata.github.io/bme690-toolkit/)**,
+with nothing to install. That is the easiest way in, and what most people
+should use. Details are in
+[firmware/bme690-logger-idf](firmware/bme690-logger-idf/).
 
 The rest of this section drives the shuttle on Bosch's Application Board 3.1
 from a PC.
@@ -170,7 +173,7 @@ The ESP32-S3 firmware does what the Application Board was meant to do:
 - [x] Heater profiles and duty cycles from AI-Studio `.bmeconfig` files
 - [x] Wiring and sensor diagnosis in plain English
 - [x] Built-in burn-in (Bosch HP-001)
-- [ ] Flash from the browser, so no toolchain is needed
+- [x] Flash from the browser, so no toolchain is needed
 - [ ] Battery operation
 - [ ] BLE service and a phone app for field capture
 

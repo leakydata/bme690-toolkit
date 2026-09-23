@@ -1,0 +1,11 @@
+{
+  "name": "BME690 8x shuttle logger",
+  "version": "dev",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [{ "path": "bme690-logger-esp32s3.bin", "offset": 0 }]
+    }
+  ]
+}
