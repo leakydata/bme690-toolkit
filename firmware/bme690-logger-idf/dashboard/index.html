@@ -264,6 +264,9 @@ function palette(){PAL=getComputedStyle(document.documentElement).getPropertyVal
 function sensors(){const a=S&&Array.isArray(S.sensors)?S.sensors.filter(Boolean):[];
 return WIRE.map((w,i)=>Object.assign({index:i,part:w[0],shuttle_pin:w[1],gpio:w[2],state:'unknown'},a.find(x=>x.index===i)||{}))}
 function labelName(tag){const l=S&&Array.isArray(S.labels)?S.labels.find(x=>x&&x.tag===tag):null;return l&&l.name?l.name:''}
+/* Readings of one heater step come once per cycle, so a real gap is several
+   cycles long; the burn-in profile's cycle is about six minutes. */
+function gapMs(){let c=0;for(const x of(S&&S.sensors)||[])if(x&&x.cycle_ms>c)c=x.cycle_ms;return Math.max(25e3,2.5*c)}
 function stepTemps(s){const hp=CFG&&CFG.configBody&&CFG.configBody.heaterProfiles;let p=null;
 if(Array.isArray(hp))p=hp.find(h=>h&&h.id===(s&&s.heater_profile))||hp[0];
 const v=p&&Array.isArray(p.temperatureTimeVectors)&&p.temperatureTimeVectors.length==10?p.temperatureTimeVectors:HP354;return v.map(x=>x[0])}
@@ -335,7 +338,7 @@ const st=[15e3,30e3,60e3,120e3,300e3,600e3,9e5].find(x=>V.win/x*78<=pw)||V.win;g
 for(let a=0;a<=V.win+1;a+=st){const x=X(x1-a),s=a/1000;g.textAlign=a==0?'right':a>=V.win?'left':'center';g.fillText(a==0?'now':(s<60?s+' s':s/60+' min')+' ago',x,T+ph+5)}
 g.save();g.beginPath();g.rect(L,T-2,pw+R,ph+4);g.clip();g.lineJoin='round';
 for(const s of series){g.strokeStyle=g.fillStyle=s.c;g.lineWidth=1.6;g.beginPath();let pt=null,lp=null;
-for(const p of s.pts){if(p[1]==null||(o.log&&p[1]<=0)){pt=null;continue}const x=X(p[0]),y=Y(p[1]);if(pt==null||p[0]-pt>25e3)g.moveTo(x,y);else g.lineTo(x,y);pt=p[0];lp=[x,y]}
+for(const p of s.pts){if(p[1]==null||(o.log&&p[1]<=0)){pt=null;continue}const x=X(p[0]),y=Y(p[1]);if(pt==null||p[0]-pt>gapMs())g.moveTo(x,y);else g.lineTo(x,y);pt=p[0];lp=[x,y]}
 g.stroke();if(lp){g.beginPath();g.arc(lp[0],lp[1],2.6,0,7);g.fill()}}
 g.restore()}
 function barChart(cv,cur,prev,temps){

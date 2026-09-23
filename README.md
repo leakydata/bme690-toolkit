@@ -15,6 +15,7 @@ undocumented. This repository fills those gaps.
 | | |
 |---|---|
 | **[`bme690` CLI](python/)** | Reads all eight sensors on a BME690 8x shuttle over USB and writes AI-Studio-importable files |
+| **[BME Studio](studio/)** | Browser app, an open alternative to BME AI-Studio: import, explore, label and train, with honest test scores and live predictions over USB. [Open it](https://leakydata.github.io/bme690-toolkit/studio/) |
 | **[`.bmerawdata` format spec](docs/bmerawdata-format.md)** | The undocumented format AI-Studio imports, reverse-engineered and verified |
 | **[Hardware notes](docs/hardware-notes.md)** | AB3.1 + shuttle pinout, flash layout, and the traps that cost days |
 | **[AI-Studio on Linux](scripts/rebuild-aistudio-linux.sh)** | Turns Bosch's Windows release into a native Linux install |

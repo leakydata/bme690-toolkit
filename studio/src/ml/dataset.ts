@@ -108,7 +108,7 @@ export function buildDataset(recs: Recording[], o: DatasetOptions): Dataset {
   return { samples, labels, featureNames };
 }
 
-/** Deterministic shuffle, so a split can be reproduced. */
+/** Seeded random numbers, so a split can be reproduced. */
 export function rng(seed: number): () => number {
   let a = seed >>> 0 || 1;
   return () => {
@@ -117,6 +117,17 @@ export function rng(seed: number): () => number {
     a ^= a << 5; a >>>= 0;
     return a / 4294967296;
   };
+}
+
+/** Fisher-Yates with a seeded generator: the same order in every browser
+ *  (sort() with a random comparator is not, and is biased). */
+export function shuffled<T>(items: readonly T[], r: () => number): T[] {
+  const a = [...items];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 export interface Split {
@@ -129,7 +140,7 @@ export interface Split {
 /** Random split of individual cycles: optimistic, kept for comparison with AI-Studio. */
 export function splitRandom(samples: Sample[], testFraction: number, seed = 1): Split {
   const r = rng(seed);
-  const idx = samples.map((_, i) => i).sort(() => r() - 0.5);
+  const idx = shuffled(samples.map((_, i) => i), r);
   const nTest = Math.round(samples.length * testFraction);
   const test = new Set(idx.slice(0, nTest));
   return {
@@ -154,7 +165,7 @@ export function splitBySpecimen(ds: Dataset, testFraction: number, seed = 1): Sp
   ds.labels.forEach((label, y) => {
     const groups = new Map<string, number>();
     for (const s of ds.samples) if (s.y === y) groups.set(s.group, (groups.get(s.group) ?? 0) + 1);
-    const order = [...groups.keys()].sort(() => r() - 0.5);
+    const order = shuffled([...groups.keys()].sort(), r);
     if (order.length < 2) {
       timeSplit.push(y);
       thin.push(label);

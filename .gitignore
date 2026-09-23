@@ -17,3 +17,6 @@ firmware/*/sdkconfig
 firmware/*/sdkconfig.old
 firmware/*/managed_components/
 firmware/*/dependencies.lock
+# ...except the small real recordings the studio tests use
+!studio/test/fixtures/*.bmerawdata
+!studio/test/fixtures/*.bmelabelinfo

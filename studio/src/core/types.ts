@@ -160,4 +160,6 @@ export interface Project {
   updated: number;
   classes: SpecimenClass[];
   models: ModelRecord[];
+  /** board configurations designed on the Heater profiles page */
+  savedConfigs?: { id: string; name: string; config: BoardConfig; updated: number }[];
 }

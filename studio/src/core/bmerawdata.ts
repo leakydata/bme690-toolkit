@@ -245,11 +245,13 @@ export function configToJson(c: BoardConfig, dateIso: string) {
     configBody: {
       heaterProfiles: c.heaterProfiles.map((h) => ({
         id: h.id,
+        ...(h.name ? { name: h.name } : {}),
         timeBase: h.timeBase,
         temperatureTimeVectors: h.steps.map((s) => [s[0], s[1]]),
       })),
       dutyCycleProfiles: c.dutyCycleProfiles.map((d) => ({
         id: d.id,
+        ...(d.name ? { name: d.name } : {}),
         numberScanningCycles: d.scanningCycles,
         numberSleepingCycles: d.sleepingCycles,
       })),

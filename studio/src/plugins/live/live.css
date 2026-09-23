@@ -1,0 +1,36 @@
+/* Live page extras; colours come from the shared variables in ui/styles.css. */
+.live-health { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 8px; }
+.live-sensors { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 0.86rem; }
+.live-sensor { white-space: nowrap; }
+.live-sensor.missing, .live-sensor.lost { color: var(--err); }
+.live-sensor.missing .muted, .live-sensor.lost .muted { color: var(--err); font-weight: 600; }
+
+.live-inline { grid-auto-flow: column; align-items: center; gap: 6px; }
+.live-latest { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.86rem; margin-top: 6px; }
+.live-chart .u-legend { text-align: left; }
+
+.live-answer { text-align: center; padding: 18px 8px 10px; }
+.live-answer.stale { opacity: 0.55; }
+.live-answer-label { font-size: clamp(2rem, 7vw, 3.4rem); font-weight: 750; line-height: 1.15; overflow-wrap: anywhere; }
+.live-history { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+.live-chip {
+  font-size: 0.74rem; font-weight: 600; padding: 1px 7px; border-radius: 999px;
+  background: var(--panel-2); color: var(--muted); max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.live-capturing { border-color: var(--err); }
+.live-dot {
+  display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--err);
+  margin-right: 4px; vertical-align: 1px; animation: live-pulse 1.4s ease-in-out infinite;
+}
+@keyframes live-pulse { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+
+.live-console summary { cursor: pointer; }
+.live-log {
+  font-family: var(--mono); font-size: 0.78rem; line-height: 1.4;
+  background: var(--panel-2); border-radius: 8px; padding: 10px; margin: 10px 0;
+  max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.live-model { min-width: 0; }
+.live-model select { width: 100%; min-width: 0; text-overflow: ellipsis; }

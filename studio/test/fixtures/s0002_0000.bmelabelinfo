@@ -1,0 +1,11 @@
+{
+	"labelInformation":	[{
+			"labelTag":	1,
+			"labelName":	"sample 1",
+			"labelDescription":	""
+		}, {
+			"labelTag":	2,
+			"labelName":	"coffee test",
+			"labelDescription":	"label rename check"
+		}]
+}

@@ -1,0 +1,37 @@
+/* Heater profiles page extras; colours come from ui/styles.css variables. */
+.hp-lib { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: 14px; }
+.hp-lib-list { display: flex; flex-direction: column; gap: 2px; max-height: 360px; overflow-y: auto; }
+.hp-lib-item {
+  font: inherit; color: var(--text); background: none; border: 0; border-radius: 8px;
+  padding: 6px 10px; display: flex; justify-content: space-between; gap: 8px; cursor: pointer; text-align: left;
+}
+.hp-lib-item:hover { background: var(--panel-2); }
+.hp-lib-item.on { background: var(--accent); color: var(--accent-text); }
+.hp-lib-item.on .muted { color: inherit; opacity: 0.85; }
+.hp-lib-preview { min-width: 0; }
+.hp-steps { overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  .hp-lib { grid-template-columns: 1fr; }
+  .hp-lib-list { flex-direction: row; overflow-x: auto; max-height: none; }
+  .hp-lib-item { flex-direction: column; white-space: nowrap; gap: 0; }
+}
+
+.hp-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.hp-tab {
+  font: inherit; font-weight: 600; cursor: pointer; color: var(--text);
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 14px;
+}
+.hp-tab.on { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.hp-edit-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .hp-edit-grid { grid-template-columns: minmax(0, 1fr); } }
+.hp-steps-table td { padding-top: 3px; padding-bottom: 3px; }
+.hp-num { width: 5.5em; text-align: right; font-variant-numeric: tabular-nums; }
+.hp-num.bad { border-color: var(--err); background: var(--err-bg); }
+
+.grid.hp-two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); margin-bottom: 14px; }
+.hp-sensors select { max-width: 11em; }
+.hp-all td { background: var(--panel-2); }
+.hp-off td { opacity: 0.55; }
+.hp-issues { margin: 6px 0 0; padding-left: 20px; }
+.hp-howto { padding-left: 20px; }
+.hp-howto li + li { margin-top: 4px; }

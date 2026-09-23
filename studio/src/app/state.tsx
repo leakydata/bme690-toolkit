@@ -3,7 +3,7 @@
  * use to change them. Views call useStudio(); every change is saved to
  * IndexedDB straight away.
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { newId } from '../core/ids.ts';
 import * as store from '../core/store.ts';
 import type { ModelRecord, Project, Recording, Specimen, SpecimenClass } from '../core/types.ts';
@@ -39,6 +39,10 @@ export interface Studio {
   saveModel(m: ModelRecord): Promise<void>;
   deleteModel(id: string): Promise<void>;
 
+  /** Add or replace a saved board configuration (matched by id). */
+  saveConfig(c: NonNullable<Project['savedConfigs']>[number]): Promise<void>;
+  deleteConfig(id: string): Promise<void>;
+
   toast(text: string, kind?: 'ok' | 'error'): void;
 }
 
@@ -58,8 +62,21 @@ const LAST_KEY = 'bme-studio:last-project';
 
 export function StudioProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [project, setProject] = useState<Project | null>(null);
-  const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [project, setProjectState] = useState<Project | null>(null);
+  const projRef = useRef<Project | null>(null);
+  const setProject = useCallback((p: Project | null) => {
+    projRef.current = p;
+    setProjectState(p);
+  }, []);
+  const [recordings, setRecordingsState] = useState<Recording[]>([]);
+  // The latest recordings, readable by actions that run back to back before
+  // React re-renders -- e.g. classing many specimens in a row -- so one
+  // change never starts from a stale copy and undoes another.
+  const recsRef = useRef<Recording[]>([]);
+  const setRecordings = useCallback((next: Recording[] | ((all: Recording[]) => Recording[])) => {
+    recsRef.current = typeof next === 'function' ? next(recsRef.current) : next;
+    setRecordingsState(recsRef.current);
+  }, []);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -71,11 +88,11 @@ export function StudioProvider({ children }: { children: ReactNode }) {
 
   const saveProject = useCallback(async (p: Project) => {
     const next = { ...p, updated: Date.now() };
+    setProject(next);   // before the write, so a change right after builds on this one
     await store.putProject(next);
-    setProject(next);
     setProjects((all) => [next, ...all.filter((x) => x.id !== next.id)]);
     return next;
-  }, []);
+  }, [setProject]);
 
   const openProject = useCallback(async (id: string | null) => {
     setLoading(true);
@@ -95,7 +112,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setProject, setRecordings]);
 
   useEffect(() => {
     (async () => {
@@ -119,10 +136,10 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   }, [openProject, toast]);
 
   const need = () => {
-    if (!project) {
+    if (!projRef.current) {
       throw new Error('Open a project first.');
     }
-    return project;
+    return projRef.current;
   };
 
   const studio = useMemo<Studio>(() => ({
@@ -177,18 +194,18 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setRecordings((all) => all.filter((r) => r.id !== id));
     },
     async renameRecording(id, name) {
-      const r = recordings.find((x) => x.id === id);
+      const r = recsRef.current.find((x) => x.id === id);
       if (!r) return;
       const next = { ...r, name: name.trim() || r.name };
-      await store.putRecording(next);
       setRecordings((all) => all.map((x) => (x.id === id ? next : x)));
+      await store.putRecording(next);
     },
     async updateSpecimen(recordingId, specimenId, patch) {
-      const r = recordings.find((x) => x.id === recordingId);
+      const r = recsRef.current.find((x) => x.id === recordingId);
       if (!r) return;
       const next = { ...r, specimens: r.specimens.map((s) => (s.id === specimenId ? { ...s, ...patch } : s)) };
-      await store.putRecording(next);
       setRecordings((all) => all.map((x) => (x.id === recordingId ? next : x)));
+      await store.putRecording(next);
     },
 
     async addClass(name) {
@@ -203,7 +220,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     },
     async deleteClass(id) {
       const p = need();
-      for (const r of recordings) {
+      for (const r of recsRef.current) {
         if (r.specimens.some((s) => s.classId === id)) {
           const next = { ...r, specimens: r.specimens.map((s) => (s.classId === id ? { ...s, classId: null } : s)) };
           await store.putRecording(next);
@@ -221,7 +238,17 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       const p = need();
       await saveProject({ ...p, models: p.models.filter((x) => x.id !== id) });
     },
-  }), [projects, project, recordings, loading, toasts, toast, openProject, saveProject]);
+
+    async saveConfig(c) {
+      const p = need();
+      const all = p.savedConfigs ?? [];
+      await saveProject({ ...p, savedConfigs: [...all.filter((x) => x.id !== c.id), c] });
+    },
+    async deleteConfig(id) {
+      const p = need();
+      await saveProject({ ...p, savedConfigs: (p.savedConfigs ?? []).filter((x) => x.id !== id) });
+    },
+  }), [projects, project, recordings, loading, toasts, toast, openProject, saveProject, setRecordings]);
 
   return <Ctx.Provider value={studio}>{children}</Ctx.Provider>;
 }

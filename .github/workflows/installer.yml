@@ -1,6 +1,7 @@
-# Builds the ESP32-S3 firmware and publishes the browser installer to GitHub
-# Pages, so the Install button always serves the firmware on main.
-name: Browser installer
+# Publishes the project site to GitHub Pages:
+#   /         the browser installer, serving the ESP32-S3 firmware built here
+#   /studio/  BME Studio, the browser app for sensor data
+name: Site
 
 on:
   push:
@@ -9,6 +10,7 @@ on:
       - "firmware/bme690-logger-idf/**"
       - "firmware/common/**"
       - "web/install/**"
+      - "studio/**"
       - ".github/workflows/installer.yml"
   workflow_dispatch:
 
@@ -35,6 +37,19 @@ jobs:
           path: firmware/bme690-logger-idf
           command: idf.py build && idf.py merge-bin -o merged.bin
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+
+      - name: Build BME Studio
+        working-directory: studio
+        run: |
+          npm ci
+          npm test
+          npm run build
+
       - name: Assemble site
         run: |
           set -eu
@@ -42,6 +57,7 @@ jobs:
           version=$(sed -n 's/^#define FW_VERSION *"\(.*\)"/\1/p' "$fw/main/board.h")
           mkdir -p site
           cp web/install/index.html site/
+          cp -r studio/dist site/studio
           sudo cp "$fw/build/merged.bin" site/bme690-logger-esp32s3.bin
           sudo chown "$(id -u)" site/bme690-logger-esp32s3.bin
           sed "s/\"version\": \"dev\"/\"version\": \"$version (${GITHUB_SHA::7})\"/" \

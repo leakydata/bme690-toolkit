@@ -1,0 +1,53 @@
+/* Explore page. Everything is prefixed ex- / tl- so it can be merged into
+   ui/styles.css as-is. */
+
+.ex-controls { align-items: flex-end; margin: 0 0 8px; }
+.ex-controls .field { min-width: 0; }
+.ex-controls select { max-width: 100%; }
+.ex-zoom { gap: 4px; margin-left: auto; }
+.ex-zoom .btn { min-width: 34px; }
+.ex-hint { margin: 6px 0 10px; }
+.ex-legend { gap: 6px 14px; margin: 8px 0 4px; }
+.ex-swatch-none { background: var(--muted); opacity: 0.35; }
+
+.tl-charts, .ex-chart-box { width: 100%; min-width: 0; overflow: hidden; user-select: none; }
+.tl-env { margin-top: 6px; }
+.tl-charts .u-legend, .ex-chart-box .u-legend { text-align: left; }
+.tl-charts .u-legend .u-series { padding: 1px 6px; }
+.tl-charts .u-legend th { font-weight: 600; }
+.tl-env .u-legend { font-size: 0.78rem; }
+.u-select { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+
+.ex-other { margin-top: 8px; }
+
+.ex-chips { gap: 6px; }
+.ex-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px 2px 6px;
+  cursor: pointer; user-select: none;
+}
+.ex-chip input { margin: 0; }
+.ex-chip.on { background: var(--panel-2); }
+
+.ex-map { margin-top: 4px; display: grid; gap: 16px; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
+.ex-map > * { min-width: 0; }
+.ex-map > .ex-verdict { order: 2; }
+.ex-nowrap { white-space: nowrap; }
+@media (max-width: 900px) { .ex-map { grid-template-columns: minmax(0, 1fr); } }
+.ex-map h3 { margin-top: 2px; }
+.ex-scatter { position: relative; width: 100%; min-width: 0; }
+.ex-scatter canvas { display: block; touch-action: pan-y; }
+.ex-scatter-placeholder { display: grid; place-items: center; height: 300px; border: 1px dashed var(--line); border-radius: 8px; }
+.ex-tip {
+  position: absolute; z-index: 3; pointer-events: none; max-width: 220px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 9px; box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
+}
+.ex-progress { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
+.ex-progress progress { flex: 1; min-width: 0; accent-color: var(--accent); }
+
+@media (max-width: 560px) {
+  .ex-controls .field { flex: 1 1 140px; }
+  .ex-controls select { width: 100%; }
+  .ex-zoom { margin-left: 0; }
+}
