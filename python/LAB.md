@@ -37,9 +37,11 @@ models are large; the small AI-Studio-style network is actually faster on the
 CPU. Loading, exploring and the classic models in notebook 01 run on any
 laptop.
 
-## What the demo shows so far
+## What Bosch's demo data shows so far
 
-On BME AI-Studio's coffee demo (one 2.5-hour session), the deep models beat
+These numbers come from **Bosch's demo dataset**, which ships inside BME AI-Studio
+(recorded by Bosch next to an espresso machine on a BME688 kit), not from a
+BME690 board of ours. On it (one 2.5-hour session), the deep models beat
 the AI-Studio-style network on the hard task: Espresso vs Filter Coffee vs Air,
 96 % against 91 % on held-out data -- though the demo has only one specimen of
 each coffee, so that test is optimistic. Self-supervised pre-training does *not* help
