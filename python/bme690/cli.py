@@ -6,7 +6,6 @@ import sys
 import time
 from typing import List, Optional
 
-from .board import AppBoard31, SHUTTLE_ID_BME690_8X
 from .device import BME690Error, HeaterConf, TPHConf
 from . import registers as R
 from .profiles import (find, load_duty_cycle_profiles, load_heater_profiles,
@@ -16,7 +15,11 @@ from . import ingest as ingest_mod
 from .recorder import Recorder
 
 
-def _open_board(args) -> AppBoard31:
+def _open_board(args):
+    # Imported here so commands that don't touch the Application Board
+    # (ingest, profiles) run without Bosch's coinespy installed.
+    from .board import AppBoard31, SHUTTLE_ID_BME690_8X
+
     board = AppBoard31(amb_temp=args.ambient)
     board.open()
     if board.shuttle_id != SHUTTLE_ID_BME690_8X:

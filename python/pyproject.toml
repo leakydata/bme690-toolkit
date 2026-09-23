@@ -4,10 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bme690tool"
-version = "0.1.0"
-description = "Linux tooling for the Bosch BME690 8x shuttle board on Application Board 3.1"
+version = "0.2.0"
+description = "Tools for Bosch BME690/BME688 gas sensors: board driver, AI-Studio file formats, and a GPU machine-learning lab"
 requires-python = ">=3.9"
-dependencies = ["coinespy>=1.0.6"]
+dependencies = []
+
+[project.optional-dependencies]
+# Bosch Application Board 3.1 over USB (the `bme690 info/read/record` commands)
+board = ["coinespy>=1.0.6"]
+# bme690.lab: data loading, deep models, notebooks
+lab = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "scikit-learn>=1.4",
+    "torch>=2.4",
+    "matplotlib>=3.8",
+    # bme690.lab.export.to_onnx (torch's ONNX exporter)
+    "onnx>=1.17",
+    "onnxscript>=0.2",
+]
+notebooks = ["bme690tool[lab]", "jupyterlab>=4", "ipykernel>=6"]
+dev = ["pytest>=8", "onnxruntime>=1.20"]
 
 [project.scripts]
 bme690 = "bme690.cli:main"

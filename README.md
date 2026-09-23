@@ -16,6 +16,7 @@ undocumented. This repository fills those gaps.
 |---|---|
 | **[`bme690` CLI](python/)** | Reads all eight sensors on a BME690 8x shuttle over USB and writes AI-Studio-importable files |
 | **[BME Studio](studio/)** | Browser app, an open alternative to BME AI-Studio: import, explore, label and train, with honest test scores and live predictions over USB. [Open it](https://leakydata.github.io/bme690-toolkit/studio/) |
+| **[Python lab](python/LAB.md)** | `bme690.lab` for researchers with a GPU: pandas data loading, honest cross-validation, deep models across all sensors and over time, self-supervised pre-training, models back to BME Studio. Notebooks included |
 | **[`.bmerawdata` format spec](docs/bmerawdata-format.md)** | The undocumented format AI-Studio imports, reverse-engineered and verified |
 | **[Hardware notes](docs/hardware-notes.md)** | AB3.1 + shuttle pinout, flash layout, and the traps that cost days |
 | **[AI-Studio on Linux](scripts/rebuild-aistudio-linux.sh)** | Turns Bosch's Windows release into a native Linux install |
@@ -40,7 +41,7 @@ running the stock `coines_bridge` firmware (how it ships), connected by USB.
 git clone https://github.com/leakydata/bme690-toolkit
 cd bme690-toolkit
 python3 -m venv .venv && . .venv/bin/activate
-pip install -e python/
+pip install -e "python/[board]"
 
 bme690 info      # board, firmware, all eight sensor IDs
 bme690 read -n 5 # live readings from every sensor
