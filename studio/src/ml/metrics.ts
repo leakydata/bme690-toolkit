@@ -113,3 +113,96 @@ export function summarize(s: Scores, labels: string[], split: 'specimen' | 'rand
 function countRight(s: Scores): number {
   return s.confusion.reduce((a, r, i) => a + r[i], 0);
 }
+
+// ---------------------------------------------------------------- regression
+
+export interface RegScores {
+  n: number;
+  /** mean absolute error, in the target's unit */
+  mae: number;
+  /** root mean squared error, in the target's unit */
+  rmse: number;
+  /** share of the test values' spread the model explains; NaN when every test value is the same */
+  r2: number;
+  /** max - min of the target over the whole data set, for scale */
+  range: number;
+  /** mae / range, 0..1 (NaN when the range is 0) */
+  maeOfRange: number;
+  /** mean(predicted - true): positive means it guesses too high on average */
+  bias: number;
+}
+
+/** Score estimates against true values. `range` is the spread of the target
+ *  over all the data (the test part alone may hold a single value). */
+export function scoreRegression(yTrue: number[], yPred: number[], range?: number): RegScores {
+  const n = yTrue.length;
+  let ae = 0;
+  let se = 0;
+  let bias = 0;
+  let mean = 0;
+  for (let i = 0; i < n; i++) mean += yTrue[i] / n;
+  let ss = 0;
+  for (let i = 0; i < n; i++) {
+    const e = yPred[i] - yTrue[i];
+    ae += Math.abs(e);
+    se += e * e;
+    bias += e;
+    ss += (yTrue[i] - mean) ** 2;
+  }
+  const r = range ?? (n ? Math.max(...yTrue) - Math.min(...yTrue) : NaN);
+  const mae = n ? ae / n : NaN;
+  return {
+    n,
+    mae,
+    rmse: n ? Math.sqrt(se / n) : NaN,
+    r2: n && ss > 1e-12 ? 1 - se / ss : NaN,
+    range: r,
+    maeOfRange: r > 0 ? mae / r : NaN,
+    bias: n ? bias / n : NaN,
+  };
+}
+
+export interface SpecimenEstimate {
+  /** "recordingId:specimen" */
+  group: string;
+  truth: number;
+  /** mean estimate over the specimen's test cycles */
+  predicted: number;
+  cycles: number;
+}
+
+/** Per specimen: its true value and the average estimate over its cycles. */
+export function estimatesBySpecimen(groups: string[], yTrue: number[], yPred: number[]): SpecimenEstimate[] {
+  const m = new Map<string, SpecimenEstimate>();
+  groups.forEach((g, i) => {
+    const e = m.get(g) ?? { group: g, truth: yTrue[i], predicted: 0, cycles: 0 };
+    e.predicted += yPred[i];
+    e.cycles++;
+    m.set(g, e);
+  });
+  return [...m.values()].map((e) => ({ ...e, predicted: e.predicted / e.cycles })).sort((a, b) => a.truth - b.truth);
+}
+
+const num = (v: number) => {
+  const a = Math.abs(v);
+  return a >= 100 ? v.toFixed(0) : a >= 10 ? v.toFixed(1) : a >= 1 ? v.toFixed(2) : String(+v.toPrecision(2));
+};
+
+/**
+ * One or two plain sentences, e.g. "On specimens it never saw, its estimates
+ * were off by 14 mg on average (about 12 % of the range)."
+ * `baselineMae` is the error of always answering the training average.
+ */
+export function summarizeRegression(s: RegScores, unit: string, split: 'specimen' | 'random', baselineMae?: number): string {
+  if (!s.n) return 'There was no test data, so the model could not be scored.';
+  const u = unit ? ` ${unit}` : '';
+  const where = split === 'specimen' ? 'On specimens it never saw' : 'On cycles held back at random';
+  let text = `${where}, its estimates were off by ${num(s.mae)}${u} on average`;
+  text += Number.isFinite(s.maeOfRange) ? ` (about ${Math.round(s.maeOfRange * 100)} % of the range).` : '.';
+  if (baselineMae !== undefined && Number.isFinite(baselineMae) && s.mae >= baselineMae * 0.9) {
+    text += ` That is no better than always guessing the average of the training data (off by ${num(baselineMae)}${u}).`;
+  } else if (Math.abs(s.bias) > s.mae * 0.6 && s.mae > 0) {
+    text += ` It mostly guesses too ${s.bias > 0 ? 'high' : 'low'}.`;
+  }
+  return text;
+}

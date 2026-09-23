@@ -6,8 +6,10 @@ import { useMemo, useRef, useState } from 'react';
 import { useStudio } from '../../app/state.tsx';
 import { groupFiles, parseSession, writeRecording, type InputFile } from '../../core/bmerawdata.ts';
 import type { Recording } from '../../core/types.ts';
+import { baseName, propertyName, unitOf, valueKeysIn } from '../../core/values.ts';
 import { download, fmtDuration } from '../../ui/format.ts';
 import { registerView } from '../registry.ts';
+import './data.css';
 
 async function loadSqlJs() {
   const [{ default: init }, { default: wasmUrl }] = await Promise.all([
@@ -104,7 +106,7 @@ function Recordings() {
     return <div className="card empty">No recordings yet. Import some above.</div>;
   }
   const exportRec = (r: Recording) => {
-    const out = writeRecording(r);
+    const out = writeRecording(r, s.project?.classes ?? []);
     download(`${r.name}.bmerawdata`, out.raw, 'application/json');
     download(`${r.name}.bmelabelinfo`, out.labels, 'application/json');
   };
@@ -191,10 +193,86 @@ function Classes() {
   );
 }
 
+/** Properties a specimen can carry a number for, e.g. "Caffeine [mg]". */
+function MeasuredValues({ keys }: { keys: string[] }) {
+  const s = useStudio();
+  const [name, setName] = useState('');
+  const [unit, setUnit] = useState('');
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of s.recordings) for (const sp of r.specimens) for (const k of Object.keys(sp.values ?? {})) m.set(k, (m.get(k) ?? 0) + 1);
+    return m;
+  }, [s.recordings]);
+  return (
+    <div className="d-values">
+      <h3>Measured values</h3>
+      <p className="muted small" style={{ margin: 0 }}>Amounts a model can learn to estimate, e.g. caffeine in mg or days of ripeness. Type each specimen's amount in the table below; leave it empty if it wasn't measured.</p>
+      {keys.length > 0 && (
+        <div className="d-props">
+          {keys.map((k) => (
+            <span key={k} className="d-prop">
+              {k} <span className="muted num">· {counts.get(k) ?? 0}</span>
+              {confirm === k ? (
+                <>
+                  <button type="button" className="btn small danger" onClick={async () => { await s.deleteValueKey(k); setConfirm(null); }}>Remove {counts.get(k) ?? 0} value{counts.get(k) === 1 ? '' : 's'}</button>
+                  <button type="button" className="btn small" onClick={() => setConfirm(null)}>Keep</button>
+                </>
+              ) : (
+                <button type="button" className="d-x" aria-label={`Remove ${k}`} title={`Remove ${k} and its values`} onClick={() => setConfirm(k)}>×</button>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+      <form className="row d-add" style={{ marginTop: keys.length ? 0 : 8 }} onSubmit={async (e) => {
+        e.preventDefault();
+        const key = propertyName(name, unit);
+        if (!key) return;
+        if (keys.includes(key)) {
+          s.toast(`There is already a property called ${key}.`, 'error');
+          return;
+        }
+        await s.addValueKey(key);
+        setName('');
+        setUnit('');
+      }}>
+        <input className="d-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="New property, e.g. Caffeine" aria-label="Property name" />
+        <input className="d-unit" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="unit, e.g. mg" aria-label="Unit (optional)" />
+        <button className="btn" disabled={!name.trim()}>Add property</button>
+      </form>
+    </div>
+  );
+}
+
+/** A number cell: saved when it loses focus or on Enter; empty clears it. */
+function ValueInput({ value, label, onSave }: { value: number | undefined; label: string; onSave: (v: number | null) => void }) {
+  const s = useStudio();
+  return (
+    <input key={String(value)} className="d-value" type="number" step="any" inputMode="decimal" defaultValue={value ?? ''} aria-label={label}
+      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+      onBlur={(e) => {
+        const text = e.target.value.trim();
+        if (text === '') {
+          if (value !== undefined) onSave(null);
+          return;
+        }
+        const v = Number(text);
+        if (!Number.isFinite(v)) {
+          s.toast(`“${text}” is not a number. Use digits and a decimal point, e.g. 81.3.`, 'error');
+          e.target.value = value === undefined ? '' : String(value);
+          return;
+        }
+        if (v !== value) onSave(v);
+      }} />
+  );
+}
+
 function Specimens() {
   const s = useStudio();
   const p = s.project!;
   const [filter, setFilter] = useState('');
+  const keys = useMemo(() => valueKeysIn(s.recordings, p), [s.recordings, p]);
   const rows = useMemo(() => {
     const out: { r: Recording; sp: Recording['specimens'][number]; cycles: number }[] = [];
     for (const r of s.recordings) {
@@ -214,9 +292,11 @@ function Specimens() {
         <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter…" aria-label="Filter specimens" />
       </div>
       <p className="muted small" style={{ marginTop: 8 }}>A specimen is one labelled stretch of a recording. Its cycles are what models train on.</p>
+      <MeasuredValues keys={keys} />
       <div className="table-wrap">
         <table className="data">
-          <thead><tr><th>Recording</th><th>Specimen</th><th className="num">Length</th><th className="num">Cycles</th><th>Class</th></tr></thead>
+          <thead><tr><th>Recording</th><th>Specimen</th><th className="num">Length</th><th className="num">Cycles</th><th>Class</th>
+            {keys.map((k) => <th key={k} className="num" title={k}>{baseName(k)}{unitOf(k) && <span className="muted"> ({unitOf(k)})</span>}</th>)}</tr></thead>
           <tbody>
             {rows.map(({ r, sp, cycles }) => {
               const cls = p.classes.find((c) => c.id === sp.classId);
@@ -235,6 +315,11 @@ function Specimens() {
                       {p.classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </td>
+                  {keys.map((k) => (
+                    <td key={k} className="num">
+                      <ValueInput value={sp.values?.[k]} label={`${k} of ${sp.name}`} onSave={(v) => s.setSpecimenValue(r.id, sp.id, k, v)} />
+                    </td>
+                  ))}
                 </tr>
               );
             })}
@@ -250,7 +335,7 @@ function Data() {
     <>
       <div className="pagehead">
         <h1>Data</h1>
-        <p>Import recordings, then sort their specimens into classes.</p>
+        <p>Import recordings, then sort their specimens into classes, and enter any amounts you measured.</p>
       </div>
       <Importer />
       <Recordings />

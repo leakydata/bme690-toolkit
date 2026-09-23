@@ -2,9 +2,12 @@
  * Exporting a trained neural network ('mlp') as a single C header for the
  * ESP32-S3 firmware: standardisation constants, weights, and a small
  * inference function in plain C (only <math.h>), no ML library needed.
+ * A regression network gets a function returning the estimated value
+ * instead of one returning a label.
  */
 import type { HeaterProfile, ModelRecord } from '../core/types.ts';
 import type { MlpState } from './models/mlp.ts';
+import { unitOf } from '../core/values.ts';
 
 export interface CExportOptions {
   /** the heater profile the model was trained on, to document its steps */
@@ -74,6 +77,7 @@ ${body}${envLines}}
 export function mlpToCHeader(model: ModelRecord, o: CExportOptions = {}): string {
   if (model.kind !== 'mlp') throw new Error('Only neural-network models can be exported as C code.');
   const s = model.state as MlpState;
+  const regress = s.task === 'regress';
   const P = (o.prefix ?? 'bme_model').replace(/[^A-Za-z0-9_]/g, '_');
   const U = P.toUpperCase();
   const nIn = s.inputs;
@@ -81,16 +85,22 @@ export function mlpToCHeader(model: ModelRecord, o: CExportOptions = {}): string
   const maxUnits = Math.max(nIn, ...s.layers.map((l) => l.units));
   const hp = o.heaterProfile;
   const spec = model.dataset;
-  const metrics = model.metrics as { honestAccuracy?: number | null; randomAccuracy?: number | null };
+  const metrics = (model.metrics ?? {}) as { honestAccuracy?: number | null; randomAccuracy?: number | null; honestMae?: number | null; randomMae?: number | null };
   const pctOf = (v: number | null | undefined) => (typeof v === 'number' ? `${(v * 100).toFixed(1)}%` : 'n/a');
+  const target = model.labels[0] ?? spec.target ?? 'value';
+  const unit = unitOf(target);
+  const maeOf = (v: number | null | undefined) => (typeof v === 'number' ? `${+v.toPrecision(3)}${unit ? ` ${unit}` : ''}` : 'n/a');
 
   const out: string[] = [];
   out.push(`/*
  * ${comment(model.name)} -- neural network exported from BME Studio
  * Created ${new Date(model.created).toISOString()}
  *
- * Tells apart: ${comment(model.labels.join(', '))}
- * Tested accuracy: ${pctOf(metrics.honestAccuracy)} on specimens it never saw, ${pctOf(metrics.randomAccuracy)} on random cycles.
+${regress
+    ? ` * Estimates: ${comment(target)}
+ * Tested average error: ${comment(maeOf(metrics.honestMae))} on specimens it never saw, ${comment(maeOf(metrics.randomMae))} on random cycles.`
+    : ` * Tells apart: ${comment(model.labels.join(', '))}
+ * Tested accuracy: ${pctOf(metrics.honestAccuracy)} on specimens it never saw, ${pctOf(metrics.randomAccuracy)} on random cycles.`}
  * Heater profile: ${comment(hp?.name ?? spec.heaterProfile)}${hp ? ` (id ${comment(hp.id)}, time base ${hp.timeBase} ms)` : ''}
 ${hp ? hp.steps.map(([t, d], i) => ` *   step ${i + 1}: ${t} degC for ${d} x ${hp.timeBase} ms`).join('\n') + '\n' : ''} * Samples: ${spec.mode === 'fused' ? 'all sensors at once (fused), ascending sensor number' : 'one sensor, one heater cycle'}
  * Feature set: ${comment(spec.featureSet)}${spec.environment ? ' + temperature, humidity, pressure' : ''}
@@ -101,8 +111,10 @@ ${model.featureNames.map((n, i) => ` *   x[${i}] ${comment(n)}`).join('\n')}
  * Usage:
  *   float x[${U}_N_INPUTS];
  *   ${P}_features(gas, temp, hum, press, x);      // or fill x yourself
- *   float p[${U}_N_CLASSES];
- *   int label = ${P}_predict(x, p);               // p[i]: probability of ${P}_labels[i]
+${regress
+    ? ` *   float v = ${P}_predict(x);                    // ${comment(target)}`
+    : ` *   float p[${U}_N_CLASSES];
+ *   int label = ${P}_predict(x, p);               // p[i]: probability of ${P}_labels[i]`}
  *
  * Plain C99, needs only <math.h>. Uses ${maxUnits * 2} floats of stack.
  */
@@ -112,11 +124,19 @@ ${model.featureNames.map((n, i) => ` *   x[${i}] ${comment(n)}`).join('\n')}
 #include <math.h>
 
 #define ${U}_N_INPUTS ${nIn}
-#define ${U}_N_CLASSES ${nOut}
+${regress ? `#define ${U}_N_OUTPUTS 1` : `#define ${U}_N_CLASSES ${nOut}`}
 #define ${U}_N_LAYERS ${s.layers.length}
 #define ${U}_MAX_UNITS ${maxUnits}
 
-static const char *const ${P}_labels[${U}_N_CLASSES] = { ${model.labels.map(cString).join(', ')} };
+${regress
+    ? `/* What the model estimates, and its unit ("" if none) */
+static const char *const ${P}_target = ${cString(target)};
+static const char *const ${P}_unit = ${cString(unit)};
+
+/* The network works in standardised units: value = output * std + mean */
+static const float ${P}_target_mean = ${f32(s.target?.mean ?? 0)};
+static const float ${P}_target_std = ${f32(s.target?.std ?? 1)};`
+    : `static const char *const ${P}_labels[${U}_N_CLASSES] = { ${model.labels.map(cString).join(', ')} };`}
 
 /* Standardisation from the training data: x' = (x - mean) / std */
 static const float ${P}_mean[${U}_N_INPUTS] = {
@@ -155,24 +175,37 @@ static inline void ${P}_dense(const float *in, int n_in, const float *w, const f
     }
 }
 
-/*
+${regress
+    ? `/*
+ * Run the network on one input vector (order at the top of this file) and
+ * return the estimate of ${comment(target)}.
+ */
+static inline float ${P}_predict(const float x[${U}_N_INPUTS])`
+    : `/*
  * Run the network on one input vector (order at the top of this file).
  * Writes class probabilities to probs (may be NULL) and returns the index
  * of the most likely label in ${P}_labels. If the highest probability is
  * low (say below 0.8) treat the answer as "not sure".
  */
-static inline int ${P}_predict(const float x[${U}_N_INPUTS], float probs[${U}_N_CLASSES])
+static inline int ${P}_predict(const float x[${U}_N_INPUTS], float probs[${U}_N_CLASSES])`}
 {
     float a[${U}_MAX_UNITS], z[${U}_MAX_UNITS];
     for (int i = 0; i < ${U}_N_INPUTS; i++) a[i] = (x[i] - ${P}_mean[i]) / ${P}_std[i];
 `);
-  const actCode: Record<string, number> = { softmax: 0, relu: 1, tanh: 2, sigmoid: 3, elu: 4 };
+  const actCode: Record<string, number> = { softmax: 0, linear: 0, relu: 1, tanh: 2, sigmoid: 3, elu: 4 };
   s.layers.forEach((l, i) => {
     const [src, dst] = i % 2 === 0 ? ['a', 'z'] : ['z', 'a'];
     out.push(`    ${P}_dense(${src}, ${l.inputs}, ${P}_w${i}, ${P}_b${i}, ${l.units}, ${dst}, ${actCode[l.activation]});\n`);
   });
   const last = s.layers.length % 2 === 1 ? 'z' : 'a';
-  out.push(`
+  out.push(regress
+    ? `
+    return ${last}[0] * ${P}_target_std + ${P}_target_mean;
+}
+
+#endif /* ${U}_H */
+`
+    : `
     /* softmax */
     float m = ${last}[0], sum = 0.0f;
     int best = 0;

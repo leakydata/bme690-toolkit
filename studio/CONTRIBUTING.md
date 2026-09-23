@@ -49,7 +49,7 @@ Most features are one of these, and none needs changes elsewhere:
 | a page | a folder in `src/plugins/`, calling `registerView()`; import it in `plugins/index.ts` |
 | a guided experiment template | add it to `TEMPLATES` in `plugins/quick/plan.ts` |
 | a way to turn cycles into features | call `registerFeatureSet()` (see `ml/features.ts`) |
-| a model type | call `registerModelKind()` (see `ml/models.ts`) |
+| a model type | call `registerModelKind()` (see `ml/models.ts`); `train()` must also estimate a number when `nClasses` is 0 |
 
 Pages read and change data only through `useStudio()` from `app/state.tsx`, so
 everything is saved and every page stays in sync.

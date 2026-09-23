@@ -3,6 +3,11 @@
  * AI-Studio trains -- standardised inputs, a few hidden layers of ten units,
  * softmax output, Adam, cross-entropy, batch 32, 256 epochs.
  *
+ * For regression the output is one linear unit and the loss mean squared or
+ * mean absolute error (AI-Studio's choice). Targets are standardised with the
+ * training values' mean and spread, which are saved with the model and
+ * undone on every prediction.
+ *
  * TensorFlow.js is only used to train. The saved state is plain arrays
  * (weights, biases, standardisation constants), and predict() runs the
  * network in plain JavaScript -- the same arithmetic the exported C header
@@ -17,8 +22,8 @@ export type Activation = 'relu' | 'tanh' | 'sigmoid' | 'elu';
 export interface DenseLayer {
   inputs: number;
   units: number;
-  /** 'softmax' only on the last layer */
-  activation: Activation | 'softmax';
+  /** 'softmax' (classification) or 'linear' (regression) only on the last layer */
+  activation: Activation | 'softmax' | 'linear';
   /** kernel, row-major [inputs][units]: w[i * units + o] */
   w: number[];
   b: number[];
@@ -26,10 +31,15 @@ export interface DenseLayer {
 
 export interface MlpState {
   version: 1;
+  /** 'regress': one linear output, un-standardised with `target`; absent = classify */
+  task?: 'regress';
   inputs: number;
+  /** 0 for regression */
   classes: number;
   scaler: Scaler;
   layers: DenseLayer[];
+  /** regression: value = output * std + mean */
+  target?: { mean: number; std: number };
 }
 
 export function activate(a: DenseLayer['activation'], v: number): number {
@@ -42,7 +52,8 @@ export function activate(a: DenseLayer['activation'], v: number): number {
   }
 }
 
-/** One forward pass; returns class probabilities. */
+/** One forward pass; returns class probabilities, or for regression the
+ *  standardised output (see predictValue). */
 export function forward(state: MlpState, x: number[]): number[] {
   let a = scaleRow(state.scaler, x);
   for (const L of state.layers) {
@@ -66,9 +77,17 @@ export function forward(state: MlpState, x: number[]): number[] {
   return a;
 }
 
+/** Regression: the estimated value for one input row. */
+export function predictValue(state: MlpState, x: number[]): number {
+  const t = state.target ?? { mean: 0, std: 1 };
+  return forward(state, x)[0] * t.std + t.mean;
+}
+
 function predictorOf(state: MlpState): Predictor {
   return {
-    predict: (x) => x.map((row) => forward(state, row)),
+    predict: state.task === 'regress'
+      ? (x) => x.map((row) => [predictValue(state, row)])
+      : (x) => x.map((row) => forward(state, row)),
     save: () => state,
     importance: () => null,
   };
@@ -87,7 +106,7 @@ registerModelKind({
   name: 'Neural network (AI-Studio style)',
   description:
     'A small neural network, the same kind BME AI-Studio trains (two layers of ten units by default). Good with plenty of data; ' +
-    'on a few specimens it can overfit. It can be exported as C code for the ESP32 board.',
+    'on a few specimens it can overfit. It can be exported as C code for the ESP32 board, and can also estimate amounts.',
   params: [
     { key: 'hiddenLayers', label: 'Hidden layers', type: 'number', default: 2, min: 1, max: 4, step: 1,
       help: 'How many layers of units sit between input and answer. AI-Studio uses 2.' },
@@ -102,6 +121,9 @@ registerModelKind({
       help: 'How many samples it looks at before each small adjustment. AI-Studio uses 32.' },
     { key: 'learningRate', label: 'Learning rate', type: 'number', default: 0.001, min: 0.00001, max: 1, step: 0.0001,
       help: 'How big each adjustment is. Too high and training jumps around; too low and it learns slowly.' },
+    { key: 'loss', label: 'What to minimise', type: 'select', default: 'mse', task: 'regress',
+      options: [{ value: 'mse', label: 'Squared error (usual)' }, { value: 'mae', label: 'Absolute error (AI-Studio)' }],
+      help: 'Squared error punishes big misses hard; absolute error treats every mg of error the same and minds odd specimens less.' },
     { key: 'earlyStopping', label: 'Stop early when it stops improving', type: 'boolean', default: false,
       help: 'Holds back 15% of the training data and stops when the network no longer gets better on it, keeping the best version. Off in AI-Studio.' },
     { key: 'patience', label: 'Patience (epochs)', type: 'number', default: 20, min: 1, max: 500, step: 1,
@@ -118,7 +140,10 @@ registerModelKind({
     const activation = String(p('activation', 'relu')) as Activation;
     const early = Boolean(p('earlyStopping', false));
     const patience = Math.max(1, Math.round(Number(p('patience', 20))));
+    const regress = nClasses === 0;
+    const loss = String(p('loss', 'mse')) === 'mae' ? 'meanAbsoluteError' : 'meanSquaredError';
     if (x.length === 0) throw new Error('There is nothing to train on.');
+    if (signal.aborted) throw abortError();
 
     const tf = await import('@tensorflow/tfjs');
     // A network this small trains faster on the CPU backend than on the GPU,
@@ -128,6 +153,9 @@ registerModelKind({
 
     const scaler = fitScaler(x);
     const xs = x.map((r) => scaleRow(scaler, r));
+    // Regression targets, standardised like the inputs.
+    const target = regress ? fitScaler(y.map((v) => [v])) : null;
+    const ys = target ? y.map((v) => (v - target.mean[0]) / target.std[0]) : [];
     // Hold back a random validation slice when stopping early.
     let trainIdx = xs.map((_, i) => i);
     let valIdx: number[] = [];
@@ -148,13 +176,18 @@ registerModelKind({
         kernelInitializer: tf.initializers.glorotUniform({ seed: seed++ }),
       }));
     }
-    model.add(tf.layers.dense({ units: nClasses, activation: 'softmax', kernelInitializer: tf.initializers.glorotUniform({ seed: seed++ }) }));
+    model.add(tf.layers.dense({
+      units: regress ? 1 : nClasses, activation: regress ? 'linear' : 'softmax',
+      kernelInitializer: tf.initializers.glorotUniform({ seed: seed++ }),
+    }));
     const optimizer = tf.train.adam(lr);
-    model.compile({ optimizer, loss: 'categoricalCrossentropy' });
+    model.compile({ optimizer, loss: regress ? loss : 'categoricalCrossentropy' });
 
     const toTensors = (idx: number[]) => tf.tidy(() => [
       tf.tensor2d(idx.map((i) => xs[i]), [idx.length, inputs]),
-      tf.oneHot(tf.tensor1d(idx.map((i) => y[i]), 'int32'), nClasses),
+      regress
+        ? tf.tensor2d(idx.map((i) => [ys[i]]), [idx.length, 1])
+        : tf.oneHot(tf.tensor1d(idx.map((i) => y[i]), 'int32'), nClasses),
     ] as const);
     const [trX, trY] = toTensors(trainIdx);
     const val = valIdx.length ? toTensors(valIdx) : null;
@@ -227,12 +260,16 @@ registerModelKind({
         layers.push({
           inputs: nIn,
           units: nOut,
-          activation: i + 2 >= weights.length ? 'softmax' : activation,
+          activation: i + 2 >= weights.length ? (regress ? 'linear' : 'softmax') : activation,
           w: weights[i],
           b: weights[i + 1],
         });
       }
-      return predictorOf({ version: 1, inputs, classes: nClasses, scaler, layers });
+      return predictorOf({
+        version: 1, ...(regress ? { task: 'regress' as const } : {}),
+        inputs, classes: nClasses, scaler, layers,
+        ...(target ? { target: { mean: target.mean[0], std: target.std[0] } } : {}),
+      });
     } finally {
       tf.dispose([trX, trY, ...(val ? [val[0], val[1]] : [])]);
       model.dispose();

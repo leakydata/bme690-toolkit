@@ -40,3 +40,8 @@ table.data.train-confusion tr:hover td { filter: brightness(0.97); }
   table.train-saved td:first-child, table.train-saved td:last-child { grid-column: 1 / -1; }
   table.train-saved td.num { text-align: left; }
 }
+
+/* "What should the model do?" */
+.train-task { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+.train-task-option { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--panel-2); }
+.train-task-option.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }

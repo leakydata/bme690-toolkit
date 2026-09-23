@@ -14,6 +14,8 @@ import { STEPS, type BoardConfig, type Cycle, type Points, type Specimen } from 
 export interface LabelInfo {
   name: string;
   description: string;
+  /** measured values carried in BME Studio's extra "values" field */
+  values?: Record<string, number>;
 }
 
 export function buildSpecimens(points: Points, labels: Map<number, LabelInfo>): Specimen[] {
@@ -33,6 +35,7 @@ export function buildSpecimens(points: Points, labels: Map<number, LabelInfo>): 
         start: t,
         end: t,
         classId: null,
+        ...(info?.values ? { values: { ...info.values } } : {}),
       };
       out.push(cur);
     }

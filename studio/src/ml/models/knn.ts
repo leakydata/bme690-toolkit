@@ -1,13 +1,16 @@
 /**
  * "Nearest neighbours": remembers every training cycle and answers with the
  * labels of the k most similar ones. A simple baseline -- if a fancier model
- * can't beat it, the fancier model isn't learning much.
+ * can't beat it, the fancier model isn't learning much. For regression it
+ * answers with the (optionally distance-weighted) mean of their values.
  */
 import { registerModelKind, type Predictor } from '../models.ts';
 import { abortError, fitScaler, scaleRow, type Scaler } from './scale.ts';
 
 export interface KnnState {
   version: 1;
+  /** 'regress': y holds values and predict() returns [mean]; absent = classify */
+  task?: 'regress';
   k: number;
   weighting: 'uniform' | 'distance';
   classes: number;
@@ -41,8 +44,15 @@ function predictOne(s: KnnState, row: number[]): number[] {
     bestY.splice(p, 0, s.y[i]);
     if (bestD.length > k) { bestD.pop(); bestY.pop(); }
   }
+  const weight = (dd: number) => (s.weighting === 'distance' ? 1 / (Math.sqrt(dd) + 1e-6) : 1);
+  if (s.task === 'regress') {
+    let sw = 0;
+    let sv = 0;
+    bestD.forEach((dd, i) => { const w = weight(dd); sw += w; sv += w * bestY[i]; });
+    return [sw > 0 ? sv / sw : NaN];
+  }
   const votes = new Array<number>(s.classes).fill(0);
-  bestD.forEach((dd, i) => { votes[bestY[i]] += s.weighting === 'distance' ? 1 / (Math.sqrt(dd) + 1e-6) : 1; });
+  bestD.forEach((dd, i) => { votes[bestY[i]] += weight(dd); });
   const sum = votes.reduce((a, b) => a + b, 0);
   return votes.map((v) => (sum > 0 ? v / sum : 1 / s.classes));
 }
@@ -55,7 +65,7 @@ registerModelKind({
   id: 'knn',
   name: 'Nearest neighbours',
   description:
-    'Answers with the label of the most similar training cycles. Nothing to tune and nothing hidden -- a useful baseline to compare the other models with.',
+    'Answers with the label (or the average amount) of the most similar training cycles. Nothing to tune and nothing hidden -- a useful baseline to compare the other models with.',
   params: [
     { key: 'k', label: 'Neighbours (k)', type: 'number', default: 5, min: 1, max: 101, step: 1,
       help: 'How many of the most similar training cycles vote. Odd numbers avoid ties.' },
@@ -72,6 +82,7 @@ registerModelKind({
     progress({ fraction: 1, message: `Remembered ${x.length} training cycles` });
     return predictorOf({
       version: 1,
+      ...(nClasses === 0 ? { task: 'regress' as const } : {}),
       k: Math.max(1, Math.round(Number(params.k ?? 5))),
       weighting: params.weighting === 'distance' ? 'distance' : 'uniform',
       classes: nClasses,

@@ -171,6 +171,12 @@ named from the matching `labelName`. A tag with no entry becomes an unnamed
 specimen. Changing `label_tag` mid-recording closes the current specimen and
 opens a new one, which is how one recording carries several samples.
 
+BME Studio adds two optional fields per entry when it exports, which AI-Studio
+ignores: `className`, the class the specimen was sorted into, and `values`,
+the amounts measured for it, keyed by property name with the unit in brackets
+(`"values": { "Caffeine [mg]": 126 }`). BME Studio reads `values` back on
+import.
+
 ---
 
 ## Session times

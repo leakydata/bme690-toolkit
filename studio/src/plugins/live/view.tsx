@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type uPlot from 'uplot';
 import { CLASS_COLORS, useStudio } from '../../app/state.tsx';
 import { hasWebSerial } from '../../core/board-serial.ts';
+import { fmtValue, unitOf } from '../../core/values.ts';
 import { fmtDuration, fmtOhm, sensorColor } from '../../ui/format.ts';
 import { registerView } from '../registry.ts';
 import { axis, Chart, cssVar } from './chart.tsx';
@@ -308,12 +309,59 @@ function LiveCharts() {
 
 // ------------------------------------------------------------ prediction
 
+/** A regression model's answer: the estimate, big, with its unit and the sensors' spread. */
+function EstimateView() {
+  const st = useLive();
+  const target = st.model?.labels?.[0] ?? '';
+  const unit = unitOf(target);
+  const e = st.estimate;
+  const stale = e && Date.now() - e.at > 60_000;
+  const show = (v: number) => fmtValue(v, unit);
+  // The amounts it was trained on, when the saved metrics say (imported models may not).
+  const d = (st.model?.metrics as { distinct?: unknown } | null | undefined)?.distinct;
+  const trained = Array.isArray(d) ? d.filter((v): v is number => typeof v === 'number') : [];
+  return (
+    <>
+      <div className={`live-answer${stale ? ' stale' : ''}`} aria-live="polite">
+        {e ? (
+          <>
+            <div className="muted small">{target}</div>
+            <div className="live-answer-label num">{show(e.value)}</div>
+            <div className="muted">
+              {e.voters > 1 ? <>middle of {e.voters} sensors · they span ±{show(e.spread)}</> : 'one estimate per round'}
+              {stale && ' · no new cycles for a while'}
+            </div>
+          </>
+        ) : (
+          <div className="muted">{st.modelNote || 'Waiting for data…'}</div>
+        )}
+      </div>
+      {e && st.modelNote && <p className="muted small">{st.modelNote}</p>}
+      {st.estimates.length > 0 && (
+        <div className="live-history" aria-label="Recent estimates, oldest first">
+          {st.estimates.slice(-24).map((h, i) => (
+            <span key={i} className="live-chip num" title={`${show(h.value)} ±${show(h.spread)} at ${new Date(h.at).toLocaleTimeString()}`}>
+              {fmtValue(h.value)}
+            </span>
+          ))}
+        </div>
+      )}
+      <p className="muted small" style={{ marginTop: 8 }}>
+        The model can only estimate within the amounts it was trained on
+        {trained.length > 0 && ` (${trained.length <= 6 ? trained.map(show).join(', ') : `${show(trained[0])} to ${show(trained[trained.length - 1])}`})`};
+        treat numbers outside that range as a guess.
+      </p>
+    </>
+  );
+}
+
 function Prediction() {
   const s = useStudio();
   const st = useLive();
   const [threshold, setThreshold] = useState(0.6);
   const models = s.project?.models ?? [];
   if (st.phase !== 'connected' && !st.model) return null;
+  const regress = st.model?.dataset?.task === 'regress';
 
   const colorOf = (label: string) => s.project?.classes.find((c) => c.name === label)?.color ?? cssVar('--muted');
   const a = st.answer;
@@ -323,7 +371,7 @@ function Prediction() {
 
   return (
     <div className="card">
-      <h2>What does it smell?</h2>
+      <h2>{regress ? 'How much is there?' : 'What does it smell?'}</h2>
       {models.length === 0 ? (
         <p className="muted">No trained models in this project yet. Record some samples below, sort them into classes on the
           Data page, then train a model on the Train page. It will show up here.</p>
@@ -334,17 +382,20 @@ function Prediction() {
               <select value={st.model?.id ?? ''} onChange={(e) => live.chooseModel(models.find((m) => m.id === e.target.value) ?? null)}>
                 <option value="">— choose a trained model —</option>
                 {models.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name} ({m.dataset.mode === 'fused' ? 'all sensors together' : 'each sensor votes'})</option>
+                  <option key={m.id} value={m.id}>{m.name} ({m.dataset?.task === 'regress' ? `estimates ${m.labels?.[0] ?? 'a value'}, ` : ''}{m.dataset?.mode === 'fused' ? 'all sensors together' : m.dataset?.task === 'regress' ? 'middle of the sensors' : 'each sensor votes'})</option>
                 ))}
               </select>
             </label>
-            <label className="field" style={{ flex: '1 1 200px' }}>
-              Say "not sure" below {Math.round(threshold * 100)} % confidence
-              <input type="range" min={0.3} max={0.95} step={0.05} value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} />
-            </label>
+            {!regress && (
+              <label className="field" style={{ flex: '1 1 200px' }}>
+                Say "not sure" below {Math.round(threshold * 100)} % confidence
+                <input type="range" min={0.3} max={0.95} step={0.05} value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} />
+              </label>
+            )}
           </div>
           {st.modelError && <div className="notice error" style={{ marginTop: 10 }}>{st.modelError}</div>}
-          {st.model && !st.modelError && (
+          {regress && st.model && !st.modelError && <EstimateView />}
+          {!regress && st.model && !st.modelError && (
             <div className={`live-answer${stale ? ' stale' : ''}`} aria-live="polite">
               {a ? (
                 <>
@@ -362,8 +413,8 @@ function Prediction() {
               )}
             </div>
           )}
-          {a && st.modelNote && <p className="muted small">{st.modelNote}</p>}
-          {st.history.length > 0 && (
+          {!regress && a && st.modelNote && <p className="muted small">{st.modelNote}</p>}
+          {!regress && st.history.length > 0 && (
             <div className="live-history" aria-label="Recent answers, oldest first">
               {st.history.slice(-24).map((h, i) => {
                 const ok = h.confidence >= threshold;

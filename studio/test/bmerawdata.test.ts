@@ -38,3 +38,15 @@ test('round-trips through the writer', () => {
   assert.equal(again.cycles.length, r.cycles.length);
   assert.deepEqual(again.specimens.map((s) => s.name), r.specimens.map((s) => s.name));
 });
+
+test('measured values survive export and import', () => {
+  const g = groupFiles(files).find((x) => x.stem === 's0002')!;
+  const r = { ...parseSession(g.stem, g.raw, g.labels), projectId: 'p' };
+  r.specimens[1] = { ...r.specimens[1], values: { 'Caffeine [mg]': 81.3434, 'Ripeness [days]': 3 } };
+  const out = writeRecording(r);
+  const info = JSON.parse(out.labels).labelInformation;
+  assert.deepEqual(info.find((l: { labelName: string }) => l.labelName === 'coffee test').values, { 'Caffeine [mg]': 81.3434, 'Ripeness [days]': 3 });
+  assert.equal(info.find((l: { labelName: string }) => l.labelName === 'sample 1').values, undefined);
+  const again = parseSession('x', [{ name: 'x.bmerawdata', text: out.raw }], [{ name: 'x.bmelabelinfo', text: out.labels }]);
+  assert.deepEqual(again.specimens.map((s) => s.values), [undefined, { 'Caffeine [mg]': 81.3434, 'Ripeness [days]': 3 }]);
+});

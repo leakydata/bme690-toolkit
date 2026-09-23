@@ -3,7 +3,10 @@
  * the training cycles and choosing among a random few features at every
  * split; the forest's answer is the average of the trees' answers.
  *
- * Plain TypeScript CART (Gini impurity), no dependency. Trees are stored as
+ * For regression the trees split to reduce the variance of the values
+ * (each leaf answers with its mean) and the forest averages the leaves.
+ *
+ * Plain TypeScript CART (Gini impurity, or variance for regression), no dependency. Trees are stored as
  * flat arrays so a saved forest is small, JSON-safe and quick to evaluate
  * one cycle at a time.
  */
@@ -17,13 +20,17 @@ export interface TreeState {
   threshold: number[];
   left: number[];
   right: number[];
-  /** class probabilities of leaf nodes, [node * classes + class] (zeros for inner nodes) */
+  /** class probabilities of leaf nodes, [node * classes + class] (zeros for
+   *  inner nodes); for regression one number per node, the leaf's mean value */
   value: number[];
 }
 
 export interface ForestState {
   version: 1;
+  /** 'regress': trees hold mean values and predict() returns [value]; absent = classify */
+  task?: 'regress';
   inputs: number;
+  /** 0 for regression */
   classes: number;
   trees: TreeState[];
   /** mean decrease in impurity, one per feature, summing to 1 */
@@ -122,7 +129,94 @@ function growTree(X: Float64Array, d: number, y: Int32Array, C: number, rows: nu
   return t;
 }
 
+/**
+ * Grow one regression tree: each split is the one that most reduces the sum
+ * of squared differences from the mean (variance reduction); leaves hold
+ * the mean of their values.
+ */
+function growRegressionTree(X: Float64Array, d: number, y: Float64Array, rows: number[], o: GrowOptions, rand: () => number, imp: Float64Array): TreeState {
+  const t: TreeState = { feature: [], threshold: [], left: [], right: [], value: [] };
+  const total = rows.length;
+  const addNode = () => {
+    t.feature.push(-1); t.threshold.push(0); t.left.push(-1); t.right.push(-1); t.value.push(0);
+    return t.feature.length - 1;
+  };
+  const feats = Array.from({ length: d }, (_, i) => i);
+  const stack: { node: number; rows: number[]; depth: number }[] = [{ node: addNode(), rows, depth: 0 }];
+  while (stack.length) {
+    const { node, rows: r, depth } = stack.pop()!;
+    const n = r.length;
+    let sum = 0;
+    let sq = 0;
+    for (const i of r) { sum += y[i]; sq += y[i] * y[i]; }
+    const mean = n ? sum / n : 0;
+    // Sum of squared errors around the mean, per sample.
+    const parentVar = n ? Math.max(0, sq / n - mean * mean) : 0;
+    t.value[node] = mean;
+    const scale = Math.max(1e-12, Math.abs(mean) ** 2);
+    if (parentVar <= 1e-12 * scale || n < 2 * o.minLeaf || (o.maxDepth > 0 && depth >= o.maxDepth)) continue;
+
+    for (let k = 0; k < o.mtry; k++) {
+      const j = k + Math.floor(rand() * (d - k));
+      [feats[k], feats[j]] = [feats[j], feats[k]];
+    }
+    let bestGain = 0;
+    let bestF = -1;
+    let bestThr = 0;
+    const sorted = r.slice();
+    for (let k = 0; k < o.mtry; k++) {
+      const f = feats[k];
+      sorted.sort((a, b) => X[a * d + f] - X[b * d + f]);
+      let ls = 0;
+      let lq = 0;
+      for (let s = 0; s < n - 1; s++) {
+        const yi = y[sorted[s]];
+        ls += yi; lq += yi * yi;
+        const nl = s + 1;
+        const nr = n - nl;
+        if (nl < o.minLeaf) continue;
+        if (nr < o.minLeaf) break;
+        const v = X[sorted[s] * d + f];
+        const vNext = X[sorted[s + 1] * d + f];
+        if (v === vNext) continue;
+        const rs = sum - ls;
+        const rq = sq - lq;
+        const sse = (lq - (ls * ls) / nl) + (rq - (rs * rs) / nr);
+        const gain = parentVar - sse / n;
+        if (gain > bestGain + 1e-12 * scale) {
+          bestGain = gain;
+          bestF = f;
+          bestThr = (v + vNext) / 2;
+        }
+      }
+    }
+    if (bestF < 0) continue;
+    imp[bestF] += (n / total) * bestGain;
+    const lr: number[] = [];
+    const rr: number[] = [];
+    for (const i of r) (X[i * d + bestF] <= bestThr ? lr : rr).push(i);
+    t.feature[node] = bestF;
+    t.threshold[node] = bestThr;
+    t.value[node] = 0;
+    const l = addNode();
+    const rn = addNode();
+    t.left[node] = l;
+    t.right[node] = rn;
+    stack.push({ node: l, rows: lr, depth: depth + 1 }, { node: rn, rows: rr, depth: depth + 1 });
+  }
+  return t;
+}
+
 function predictOne(s: ForestState, x: number[]): number[] {
+  if (s.task === 'regress') {
+    let sum = 0;
+    for (const t of s.trees) {
+      let k = 0;
+      while (t.feature[k] >= 0) k = x[t.feature[k]] <= t.threshold[k] ? t.left[k] : t.right[k];
+      sum += t.value[k];
+    }
+    return [s.trees.length ? sum / s.trees.length : NaN];
+  }
   const C = s.classes;
   const out = new Array<number>(C).fill(0);
   for (const t of s.trees) {
@@ -148,7 +242,7 @@ registerModelKind({
   name: 'Random forest',
   description:
     'Many simple yes/no decision trees that vote. Needs no tuning, trains in seconds, and on small data sets like a few ' +
-    'specimens it often beats the neural network. It also shows which heater steps matter most.',
+    'specimens it often beats the neural network. It also shows which heater steps matter most. Can also estimate amounts.',
   params: [
     { key: 'trees', label: 'Trees', type: 'number', default: 100, min: 1, max: 1000, step: 1,
       help: 'How many trees vote. More is steadier but slower; beyond 100 it rarely helps.' },
@@ -174,7 +268,9 @@ registerModelKind({
 
     const X = new Float64Array(n * d);
     x.forEach((row, i) => row.forEach((v, j) => { X[i * d + j] = v; }));
-    const Y = Int32Array.from(y);
+    const regress = nClasses === 0;
+    const Y = Int32Array.from(regress ? [] : y);
+    const YR = Float64Array.from(regress ? y : []);
     const rand = seeded(12345);
     const trees: TreeState[] = [];
     const importance = new Array<number>(d).fill(0);
@@ -184,7 +280,8 @@ registerModelKind({
       if (signal.aborted) throw abortError();
       const rows = Array.from({ length: n }, () => Math.floor(rand() * n));
       const imp = new Float64Array(d);
-      trees.push(growTree(X, d, Y, nClasses, rows, { maxDepth, minLeaf, mtry }, rand, imp));
+      const o = { maxDepth, minLeaf, mtry };
+      trees.push(regress ? growRegressionTree(X, d, YR, rows, o, rand, imp) : growTree(X, d, Y, nClasses, rows, o, rand, imp));
       const s = imp.reduce((a, b) => a + b, 0);
       if (s > 0) for (let j = 0; j < d; j++) importance[j] += imp[j] / s;
       progress({ fraction: (k + 1) / nTrees, message: `Tree ${k + 1} of ${nTrees}` });
@@ -194,7 +291,10 @@ registerModelKind({
       }
     }
     const s = importance.reduce((a, b) => a + b, 0);
-    return predictorOf({ version: 1, inputs: d, classes: nClasses, trees, importance: importance.map((v) => (s > 0 ? v / s : 0)) });
+    return predictorOf({
+      version: 1, ...(regress ? { task: 'regress' as const } : {}),
+      inputs: d, classes: nClasses, trees, importance: importance.map((v) => (s > 0 ? v / s : 0)),
+    });
   },
 
   async load(state) {

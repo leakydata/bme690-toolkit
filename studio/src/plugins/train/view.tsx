@@ -1,32 +1,38 @@
 /**
- * Train: choose what to tell apart and from which data, train a model, see
- * an honest score (on specimens the model never saw) next to the
+ * Train: choose what the model should do -- tell classes apart, or estimate
+ * a measured number such as caffeine in mg -- and from which data, train a
+ * model, see an honest score (on specimens the model never saw) next to the
  * AI-Studio-style one, save it, run it, export it.
  */
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useStudio } from '../../app/state.tsx';
-import type { DatasetSpec, Project, Recording } from '../../core/types.ts';
+import type { DatasetSpec, Project, Recording, Task } from '../../core/types.ts';
+import { baseName, fmtValue, unitOf, valueKeysIn } from '../../core/values.ts';
 import { buildDataset, heaterProfilesIn } from '../../ml/dataset.ts';
 import { getFeatureSets } from '../../ml/features.ts';
 import { pct } from '../../ml/metrics.ts';
-import { getModelKind, getModelKinds, type ModelKind, type ParamSpec, type ParamValue } from '../../ml/models.ts';
+import { getModelKind, getModelKinds, paramsFor, type ModelKind, type ParamSpec, type ParamValue } from '../../ml/models.ts';
 import '../../ml/models/index.ts';
 import { sensorColor } from '../../ui/format.ts';
 import { registerView } from '../registry.ts';
 import { axis, cssVar, Plot } from './chart.tsx';
-import { problemWith, splitOf, toRecord, trainAndEvaluate, type Phase, type SplitMode, type TrainOutcome, type TrainRequest } from './pipeline.ts';
+import { problemWith, problemWithRegression, splitOf, toRecord, trainAny, type AnyOutcome, type Phase, type SplitMode, type TrainRequest } from './pipeline.ts';
+import { RegResults } from './regression.tsx';
 import { Results } from './results.tsx';
 import { findHeater, labelColors, SavedModels } from './saved.tsx';
 import './train.css';
 
 /** Params shown up front; the rest go under "More options". */
 const BASIC: Record<string, string[]> = {
-  mlp: ['hiddenLayers', 'units', 'epochs'],
+  mlp: ['hiddenLayers', 'units', 'epochs', 'loss'],
   forest: ['trees'],
   knn: ['k'],
 };
 
 interface Settings {
+  task: Task;
+  /** regression: the property to estimate */
+  target: string;
   include: Record<string, boolean>;
   trainAs: Record<string, string>;
   heaterProfile: string;
@@ -50,6 +56,8 @@ function defaults(p: Project, recs: Recording[]): Settings {
     r.specimens.forEach((sp, i) => { if (sp.classId && used.has(i)) withCycles.add(sp.classId); });
   }
   return {
+    task: 'classify',
+    target: valueKeysIn(recs, p)[0] ?? '',
     include: Object.fromEntries(p.classes.map((c) => [c.id, withCycles.has(c.id)])),
     trainAs: {},
     heaterProfile: heaterProfilesIn(recs)[0]?.id ?? '',
@@ -149,7 +157,7 @@ function LossChart({ run, split }: { run: RunState; split: SplitMode }) {
 
 function Trainer({ req, blocked, recordings, onDone, onStart }: {
   req: TrainRequest; blocked: string | null; recordings: Recording[];
-  onDone: (o: TrainOutcome) => void; onStart: () => void;
+  onDone: (o: AnyOutcome) => void; onStart: () => void;
 }) {
   const s = useStudio();
   const [run, setRun] = useState<RunState | null>(null);
@@ -167,7 +175,7 @@ function Trainer({ req, blocked, recordings, onDone, onStart }: {
     onStart();
     try {
       await new Promise((r) => setTimeout(r, 20));
-      const o = await trainAndEvaluate(recordings, req, (phase, p) => {
+      const o = await trainAny(recordings, req, (phase, p) => {
         st.phase = phase;
         st.fraction = p.fraction;
         st.message = p.message;
@@ -230,7 +238,7 @@ function TrainView() {
   const p = studio.project!;
   const recs = studio.recordings;
   const [st, set] = useSettings(p, recs);
-  const [outcome, setOutcome] = useState<TrainOutcome | null>(null);
+  const [outcome, setOutcome] = useState<AnyOutcome | null>(null);
   const [name, setName] = useState('');
   const [saved, setSaved] = useState(false);
 
@@ -250,15 +258,20 @@ function TrainView() {
     return m;
   }, [p.classes, st.include, st.trainAs]);
 
+  const properties = useMemo(() => valueKeysIn(recs, p), [recs, p]);
+  const regress = st.task === 'regress';
+  const target = properties.includes(st.target) ? st.target : properties[0] ?? '';
+
   const spec: DatasetSpec = useMemo(() => ({
+    ...(regress ? { task: 'regress' as const, target } : {}),
     featureSet: st.featureSet,
     environment: st.environment,
     heaterProfile,
     // Per sensor with every sensor: store "any", so the model runs on any sensor with this heater profile later.
     sensors: st.mode === 'per-sensor' && sensors.length === availableSensors.length ? [] : sensors,
     mode: st.mode,
-    labelOf,
-  }), [st.featureSet, st.environment, heaterProfile, st.mode, sensors, availableSensors.length, labelOf]);
+    labelOf: regress ? {} : labelOf,
+  }), [regress, target, st.featureSet, st.environment, heaterProfile, st.mode, sensors, availableSensors.length, labelOf]);
 
   // Per class: cycles and specimens with this heater profile and these sensors.
   const counts = useMemo(() => {
@@ -277,11 +290,26 @@ function TrainView() {
     return m;
   }, [recs, heaterProfile, sensors]);
 
+  // Regression: the specimens with a value for the chosen property, and their cycles.
+  const valueRows = useMemo(() => {
+    if (!target) return [];
+    const out: { key: string; recording: string; name: string; value: number; cycles: number }[] = [];
+    for (const r of recs) {
+      const per = new Map<number, number>();
+      for (const c of r.cycles) if (c.heaterProfile === heaterProfile && sensors.includes(c.sensor)) per.set(c.specimen, (per.get(c.specimen) ?? 0) + 1);
+      r.specimens.forEach((sp, i) => {
+        const v = sp.values?.[target];
+        if (typeof v === 'number') out.push({ key: `${r.id}:${sp.id}`, recording: r.name, name: sp.name, value: v, cycles: per.get(i) ?? 0 });
+      });
+    }
+    return out.sort((a, b) => a.value - b.value);
+  }, [recs, target, heaterProfile, sensors]);
+
   const deferredSpec = useDeferredValue(spec);
   const preview = useMemo(() => {
     try {
       const ds = buildDataset(recs, deferredSpec);
-      const problem = problemWith(ds);
+      const problem = deferredSpec.task === 'regress' ? problemWithRegression(ds) : problemWith(ds);
       const split = problem ? null : splitOf(ds, st.split, st.testFraction);
       const perLabel = ds.labels.map((l, y) => {
         const own = ds.samples.filter((x) => x.y === y);
@@ -295,14 +323,15 @@ function TrainView() {
 
   const kinds = getModelKinds();
   const kind: ModelKind | undefined = kinds.find((k) => k.id === st.kind) ?? kinds[0];
+  const kindParams = useMemo(() => (kind ? paramsFor(kind, st.task) : []), [kind, st.task]);
   const params: Record<string, ParamValue> = useMemo(() => {
     const own = st.params[kind?.id ?? ''] ?? {};
-    return Object.fromEntries((kind?.params ?? []).map((ps) => [ps.key, own[ps.key] ?? ps.default]));
-  }, [kind, st.params]);
+    return Object.fromEntries(kindParams.map((ps) => [ps.key, own[ps.key] ?? ps.default]));
+  }, [kind, kindParams, st.params]);
   const setParam = (key: string, v: ParamValue) => set({ params: { ...st.params, [kind.id]: { ...st.params[kind.id], [key]: v } } });
   const basic = BASIC[kind?.id ?? ''];
-  const basicParams = kind ? kind.params.filter((x) => !basic || basic.includes(x.key)) : [];
-  const moreParams = kind ? kind.params.filter((x) => basic && !basic.includes(x.key)) : [];
+  const basicParams = kindParams.filter((x) => !basic || basic.includes(x.key));
+  const moreParams = kindParams.filter((x) => basic && !basic.includes(x.key));
 
   const req: TrainRequest = { spec, kind: kind?.id ?? '', params, split: st.split, testFraction: st.testFraction };
   const fsets = getFeatureSets();
@@ -318,27 +347,95 @@ function TrainView() {
       </>
     );
   }
-  if (p.classes.length === 0) {
+  if (p.classes.length === 0 && properties.length === 0) {
     return (
       <>
         <div className="pagehead"><h1>Train</h1></div>
-        <div className="card empty">No classes yet. On the <a href="#data">Data</a> page, create classes such as “Coffee” and “Air” and assign them to specimens.</div>
+        <div className="card empty">No classes or measured values yet. On the <a href="#data">Data</a> page, create classes such as “Coffee” and “Air” and
+          assign them to specimens — or enter a measured amount for each specimen, such as caffeine in mg.</div>
         <SavedModels />
       </>
     );
   }
 
   const labelGroups = [...new Set(Object.values(labelOf))].sort();
-  const colorsNow = outcome ? labelColors({ labels: outcome.labels, dataset: outcome.request.spec }, p.classes) : [];
+  const colorsNow = outcome && outcome.task === 'classify' ? labelColors({ labels: outcome.labels, dataset: outcome.request.spec }, p.classes) : [];
+  const unit = unitOf(target);
+  const distinct = [...new Set(valueRows.map((r) => r.value))].sort((a, b) => a - b);
+  const valueCycles = valueRows.reduce((a, r) => a + r.cycles, 0);
 
   return (
     <>
       <div className="pagehead">
         <h1>Train</h1>
-        <p>Teach a model to tell your classes apart, and find out honestly how well it will work on a sample it has never smelled.</p>
+        <p>Teach a model to tell your classes apart or to estimate an amount, and find out honestly how well it will work on a sample it has never smelled.</p>
+      </div>
+
+      <div className="card">
+        <h2>What should the model do?</h2>
+        <fieldset className="train-radios train-task" aria-label="What should the model do?">
+          <label className={`train-check train-task-option${!regress ? ' on' : ''}`}>
+            <input type="radio" name="task" checked={!regress} onChange={() => { set({ task: 'classify' }); setOutcome(null); }} />
+            <span><b>Tell classes apart</b><br /><span className="muted small">“Is this coffee or air?” The model answers with one of your classes.</span></span>
+          </label>
+          <label className={`train-check train-task-option${regress ? ' on' : ''}`}>
+            <input type="radio" name="task" checked={regress} onChange={() => { set({ task: 'regress' }); setOutcome(null); }} />
+            <span><b>Estimate a number</b><br /><span className="muted small">“How much caffeine is in it?” The model answers with an amount it learned from values you measured.</span></span>
+          </label>
+        </fieldset>
       </div>
 
       <div className="grid train-setup">
+        {regress ? (
+        <div className="card">
+          <h2>1. What to estimate</h2>
+          {properties.length === 0 ? (
+            <div className="notice info small">No measured values yet. On the <a href="#data">Data</a> page, add a property such as “Caffeine” in mg on
+              the Specimens card and type in each specimen's amount.</div>
+          ) : (
+            <>
+              <label className="field">
+                <span>Measured value</span>
+                <select value={target} onChange={(e) => set({ target: e.target.value })}>
+                  {properties.map((k) => <option key={k} value={k}>{k}</option>)}
+                </select>
+                <span className="small">The model learns this number from the specimens that have one. Specimens without a value are left out.</span>
+              </label>
+              {valueRows.length === 0 ? (
+                <p className="muted small" style={{ marginTop: 10 }}>No specimen has a value for {target} yet. Enter some on the <a href="#data">Data</a> page.</p>
+              ) : (
+                <>
+                  <p className="small" style={{ marginTop: 10 }}>
+                    <b>{valueRows.length}</b> specimen{valueRows.length === 1 ? '' : 's'} with <b>{valueCycles.toLocaleString()}</b> cycles have a value,
+                    {' '}<b>{distinct.length}</b> different amount{distinct.length === 1 ? '' : 's'}: {distinct.length <= 8 ? distinct.map((v) => fmtValue(v, unit)).join(', ') : `${fmtValue(distinct[0], unit)} to ${fmtValue(distinct[distinct.length - 1], unit)}`}.
+                  </p>
+                  {(valueRows.length < 3 || distinct.length < 3) && (
+                    <div className="notice warn small">
+                      With {distinct.length < 3 ? `only ${distinct.length} different amount${distinct.length === 1 ? '' : 's'}` : `only ${valueRows.length} specimens`} a
+                      model cannot learn how the smell changes in between, and it cannot be tested honestly. Measure more specimens with different amounts.
+                    </div>
+                  )}
+                  <div className="table-wrap">
+                    <table className="data">
+                      <thead><tr><th>Specimen</th><th className="num">{baseName(target)}{unit && ` (${unit})`}</th><th className="num">Cycles</th></tr></thead>
+                      <tbody>
+                        {valueRows.map((r) => (
+                          <tr key={r.key}>
+                            <td>{r.name}<div className="muted small">{r.recording}</div></td>
+                            <td className="num">{fmtValue(r.value)}</td>
+                            <td className="num">{r.cycles.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+          <p className="muted small" style={{ marginTop: 8 }}>Cycles are for the heater profile and sensors chosen in step 2.</p>
+        </div>
+        ) : (
         <div className="card">
           <h2>1. What to tell apart</h2>
           <p className="muted small">Tick the classes to use. Give several classes the same “train as” name to group them, e.g. Espresso and Filter Coffee both as “Coffee”.</p>
@@ -374,8 +471,10 @@ function TrainView() {
               })}
             </div>
           )}
+          {p.classes.length === 0 && <p className="muted small">No classes yet. Create some on the <a href="#data">Data</a> page.</p>}
           <p className="muted small" style={{ marginTop: 8 }}>Counts are for the heater profile and sensors chosen in step 2.</p>
         </div>
+        )}
 
         <div className="card">
           <h2>2. Which data</h2>
@@ -496,10 +595,11 @@ function TrainView() {
         onDone={(o) => {
           setOutcome(o);
           const kn = getModelKind(o.request.kind).name.replace(/ \(.*\)$/, '');
-          setName(`${o.labels.join(' vs ')} — ${kn}`);
+          setName(o.task === 'regress' ? `${baseName(o.target)} estimate — ${kn}` : `${o.labels.join(' vs ')} — ${kn}`);
         }} />
 
-      {outcome && <Results outcome={outcome} colors={colorsNow} heater={findHeater(recs, outcome.request.spec.heaterProfile)} />}
+      {outcome?.task === 'classify' && <Results outcome={outcome} colors={colorsNow} heater={findHeater(recs, outcome.request.spec.heaterProfile)} />}
+      {outcome?.task === 'regress' && <RegResults outcome={outcome} heater={findHeater(recs, outcome.request.spec.heaterProfile)} />}
 
       {outcome && (
         <div className="card">
@@ -510,7 +610,12 @@ function TrainView() {
             try {
               await studio.saveModel(toRecord(outcome, name));
               setSaved(true);
-              studio.toast(`Saved “${name}”. Honest score ${pct(outcome.main.split === 'specimen' ? outcome.main.scores.accuracy : outcome.other?.scores.accuracy ?? NaN, 1)}.`);
+              if (outcome.task === 'regress') {
+                const h = outcome.main.split === 'specimen' ? outcome.main : outcome.other;
+                studio.toast(`Saved “${name}”. Honest average error ±${h ? fmtValue(h.scores.mae, outcome.unit) : '–'}.`);
+              } else {
+                studio.toast(`Saved “${name}”. Honest score ${pct(outcome.main.split === 'specimen' ? outcome.main.scores.accuracy : outcome.other?.scores.accuracy ?? NaN, 1)}.`);
+              }
             } catch (err) {
               studio.toast(`Could not save: ${(err as Error).message}`, 'error');
             }

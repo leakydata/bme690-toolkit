@@ -96,6 +96,12 @@ export interface Specimen {
   end: number;
   /** SpecimenClass.id, or null when not assigned */
   classId: string | null;
+  /**
+   * Measured amounts a model can learn to estimate, property name -> number,
+   * e.g. { "Caffeine [mg]": 126 }. A unit goes in brackets at the end of
+   * the name, as in AI-Studio. Absent or missing key = not measured.
+   */
+  values?: Record<string, number>;
 }
 
 export interface Recording {
@@ -121,9 +127,16 @@ export interface SpecimenClass {
   color: string;
 }
 
+/** What a model is for: telling classes apart, or estimating a number. */
+export type Task = 'classify' | 'regress';
+
 /** How samples were built from cycles; a saved model keeps these to rebuild
  *  its inputs when it runs on new data. */
 export interface DatasetSpec {
+  /** absent means 'classify' (models saved before regression existed) */
+  task?: Task;
+  /** regression: the Specimen.values property to estimate */
+  target?: string;
   featureSet: string;
   /** append temperature, humidity and pressure */
   environment: boolean;
@@ -131,7 +144,7 @@ export interface DatasetSpec {
   /** sensor indices; empty means all */
   sensors: number[];
   mode: 'per-sensor' | 'fused';
-  /** class id -> output label */
+  /** class id -> output label (empty for regression) */
   labelOf: Record<string, string>;
 }
 
@@ -143,11 +156,11 @@ export interface ModelRecord {
   /** plugin id of the model kind, e.g. "mlp" */
   kind: string;
   dataset: DatasetSpec;
-  /** output labels in order */
+  /** output labels in order; for regression the one estimated property, [target] */
   labels: string[];
   featureNames: string[];
   params: Record<string, unknown>;
-  /** test results: accuracy, confusion matrix, split used ... */
+  /** test results: accuracy, confusion matrix, split used ... (regression: MAE, RMSE, R² ...) */
   metrics: Record<string, unknown>;
   /** kind-specific serialised model, from Predictor.save() */
   state: unknown;
@@ -160,6 +173,9 @@ export interface Project {
   updated: number;
   classes: SpecimenClass[];
   models: ModelRecord[];
+  /** measured-value properties added on the Data page, e.g. "Caffeine [mg]",
+   *  kept even before any specimen has a value */
+  valueKeys?: string[];
   /** board configurations designed on the Heater profiles page */
   savedConfigs?: { id: string; name: string; config: BoardConfig; updated: number }[];
 }

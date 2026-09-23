@@ -2,19 +2,21 @@
  * Running a saved model on new cycles -- from an imported recording or live
  * from the board. Rebuilds each input exactly the way the model was trained.
  */
-import type { Cycle, ModelRecord } from '../core/types.ts';
+import type { Cycle, ModelRecord, Task } from '../core/types.ts';
 import { getFeatureSet } from './features.ts';
 import { getModelKind, type Predictor } from './models.ts';
 
 export interface Runner {
   model: ModelRecord;
+  /** 'regress': predict() returns [value]; old models without a task classify */
+  task: Task;
   labels: string[];
   /** does this model take one sensor's cycle, or all sensors' at once? */
   mode: 'per-sensor' | 'fused';
   /** sensors whose cycles the model uses, ascending */
   sensors: number[] | null;
   /**
-   * Probabilities per label, or null when the cycles don't fit the model
+   * Probabilities per label (regression: [estimated value]), or null when the cycles don't fit the model
    * (wrong heater profile, missing sensor ...). For a per-sensor model pass
    * one cycle; for a fused model pass one cycle per sensor, in any order.
    */
@@ -29,6 +31,7 @@ export async function loadRunner(model: ModelRecord): Promise<Runner> {
 
   return {
     model,
+    task: spec.task === 'regress' ? 'regress' : 'classify',
     labels: model.labels,
     mode: spec.mode,
     sensors: fixedSensors,

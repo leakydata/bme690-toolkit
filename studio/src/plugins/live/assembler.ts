@@ -154,3 +154,22 @@ export class RoundCollector {
     this.pending.clear();
   }
 }
+
+/** A regression model's answer for one round. */
+export interface Estimate {
+  /** median of the sensors' estimates (the one estimate for a fused model) */
+  value: number;
+  /** half the spread between the lowest and highest sensor estimate: shown as ± */
+  spread: number;
+  voters: number;
+  at: number;
+}
+
+/** Combine per-sensor estimates: the median, robust to one odd sensor, and how far apart they are. */
+export function combineEstimates(values: number[], at = Date.now()): Estimate | null {
+  const v = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (v.length === 0) return null;
+  const mid = v.length >> 1;
+  const value = v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
+  return { value, spread: (v[v.length - 1] - v[0]) / 2, voters: v.length, at };
+}

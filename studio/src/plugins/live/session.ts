@@ -9,7 +9,7 @@ import { BoardConnection, type BoardLink, type BoardPoint, type BoardStatus } fr
 import type { BoardConfig, Cycle, ModelRecord } from '../../core/types.ts';
 import '../../ml/models/index.ts';
 import { loadRunner, type Runner } from '../../ml/run.ts';
-import { LiveAssembler, RoundCollector, combineVotes, type Answer } from './assembler.ts';
+import { LiveAssembler, RoundCollector, combineEstimates, combineVotes, type Answer, type Estimate } from './assembler.ts';
 import { Capture } from './capture.ts';
 import { MockBoard } from './mock-board.ts';
 
@@ -48,6 +48,9 @@ export interface LiveState {
   modelNote: string;
   answer: Answer | null;
   history: Answer[];
+  /** regression models: the latest estimate and the recent ones */
+  estimate: Estimate | null;
+  estimates: Estimate[];
   /** bumps on every change the view should see */
   version: number;
 }
@@ -58,7 +61,7 @@ class LiveSession {
   state: LiveState = {
     phase: 'idle', isMock: MOCK, error: '', closedReason: '', status: null, silent: false, config: null,
     lastDataAt: 0, points: 0, capture: null, captureCycles: 0, unsaved: null,
-    model: null, runner: null, modelError: '', modelNote: '', answer: null, history: [], version: 0,
+    model: null, runner: null, modelError: '', modelNote: '', answer: null, history: [], estimate: null, estimates: [], version: 0,
   };
   /** completed cycles, oldest first (for the charts) */
   cycles: CycleRow[] = [];
@@ -259,6 +262,18 @@ class LiveSession {
 
   private predictRound(round: Cycle[], now: number) {
     const r = this.state.runner!;
+    if (r.task === 'regress') {
+      const values = r.mode === 'fused'
+        ? [r.predict(round)?.[0] ?? NaN]
+        : round.map((c) => r.predict([c])?.[0] ?? NaN);
+      const estimate = combineEstimates(values, now);
+      if (!estimate) {
+        this.noAnswer(round, r);
+        return;
+      }
+      this.set({ estimate, estimates: [...this.state.estimates, estimate].slice(-60), modelNote: '' });
+      return;
+    }
     let answer: Answer | null = null;
     if (r.mode === 'fused') {
       const probs = r.predict(round);
@@ -270,27 +285,32 @@ class LiveSession {
       answer = combineVotes(votes, now);
     }
     if (!answer) {
-      const profile = round[0]?.heaterProfile || 'unknown';
-      const want = r.model.dataset.heaterProfile;
-      const note = profile !== want
-        ? `This model was trained on heater profile "${want}", but the board is running "${profile}". Choose a model trained on the board's profile, or load that profile onto the board.`
-        : r.mode === 'fused'
-          ? `This model needs one cycle from each of sensors ${(r.sensors ?? []).join(', ') || 'it was trained on'}; waiting for all of them.`
-          : 'The model could not use these cycles (it was trained on other sensors).';
-      if (note !== this.state.modelNote) this.set({ modelNote: note });
+      this.noAnswer(round, r);
       return;
     }
     const history = [...this.state.history, answer].slice(-40);
     this.set({ answer, history, modelNote: '' });
   }
 
+  /** Say why the model could not use a round. */
+  private noAnswer(round: Cycle[], r: Runner) {
+    const profile = round[0]?.heaterProfile || 'unknown';
+    const want = r.model.dataset.heaterProfile;
+    const note = profile !== want
+      ? `This model was trained on heater profile "${want}", but the board is running "${profile}". Choose a model trained on the board's profile, or load that profile onto the board.`
+      : r.mode === 'fused'
+        ? `This model needs one cycle from each of sensors ${(r.sensors ?? []).join(', ') || 'it was trained on'}; waiting for all of them.`
+        : 'The model could not use these cycles (it was trained on other sensors).';
+    if (note !== this.state.modelNote) this.set({ modelNote: note });
+  }
+
   async chooseModel(m: ModelRecord | null) {
     this.rounds.clear();
     if (!m) {
-      this.set({ model: null, runner: null, modelError: '', modelNote: '', answer: null, history: [] });
+      this.set({ model: null, runner: null, modelError: '', modelNote: '', answer: null, history: [], estimate: null, estimates: [] });
       return;
     }
-    this.set({ model: m, runner: null, modelError: '', modelNote: 'Loading the model…', answer: null, history: [] });
+    this.set({ model: m, runner: null, modelError: '', modelNote: 'Loading the model…', answer: null, history: [], estimate: null, estimates: [] });
     try {
       const runner = await loadRunner(m);
       if (this.state.model?.id !== m.id) return;

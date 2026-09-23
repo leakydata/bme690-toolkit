@@ -30,7 +30,15 @@ export interface Studio {
   addRecordings(recs: Omit<Recording, 'projectId'>[], classes?: SpecimenClass[]): Promise<void>;
   deleteRecording(id: string): Promise<void>;
   renameRecording(id: string, name: string): Promise<void>;
-  updateSpecimen(recordingId: string, specimenId: string, patch: Partial<Pick<Specimen, 'name' | 'comment' | 'classId'>>): Promise<void>;
+  /** Change a specimen. `values` replaces its measured values as a whole;
+   *  use setSpecimenValue to change one. */
+  updateSpecimen(recordingId: string, specimenId: string, patch: Partial<Pick<Specimen, 'name' | 'comment' | 'classId' | 'values'>>): Promise<void>;
+  /** Set one measured value of a specimen, or clear it with null. */
+  setSpecimenValue(recordingId: string, specimenId: string, key: string, value: number | null): Promise<void>;
+  /** Add a measured-value property ("Caffeine [mg]") to the project. */
+  addValueKey(key: string): Promise<void>;
+  /** Remove a property and every specimen's value for it. */
+  deleteValueKey(key: string): Promise<void>;
 
   addClass(name: string): Promise<SpecimenClass>;
   updateClass(id: string, patch: Partial<Omit<SpecimenClass, 'id'>>): Promise<void>;
@@ -206,6 +214,41 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       const next = { ...r, specimens: r.specimens.map((s) => (s.id === specimenId ? { ...s, ...patch } : s)) };
       setRecordings((all) => all.map((x) => (x.id === recordingId ? next : x)));
       await store.putRecording(next);
+    },
+    async setSpecimenValue(recordingId, specimenId, key, value) {
+      const r = recsRef.current.find((x) => x.id === recordingId);
+      const sp = r?.specimens.find((x) => x.id === specimenId);
+      if (!r || !sp) return;
+      const values = { ...(sp.values ?? {}) };
+      if (value === null || !Number.isFinite(value)) delete values[key];
+      else values[key] = value;
+      const nextSp = { ...sp, values: Object.keys(values).length ? values : undefined };
+      const next = { ...r, specimens: r.specimens.map((s) => (s.id === specimenId ? nextSp : s)) };
+      setRecordings((all) => all.map((x) => (x.id === recordingId ? next : x)));
+      await store.putRecording(next);
+    },
+    async addValueKey(key) {
+      const p = need();
+      const k = key.trim();
+      if (!k || (p.valueKeys ?? []).includes(k)) return;
+      await saveProject({ ...p, valueKeys: [...(p.valueKeys ?? []), k] });
+    },
+    async deleteValueKey(key) {
+      const p = need();
+      for (const r of recsRef.current) {
+        if (!r.specimens.some((s) => s.values && key in s.values)) continue;
+        const next = {
+          ...r,
+          specimens: r.specimens.map((s) => {
+            if (!s.values || !(key in s.values)) return s;
+            const { [key]: _gone, ...rest } = s.values;
+            return { ...s, values: Object.keys(rest).length ? rest : undefined };
+          }),
+        };
+        await store.putRecording(next);
+        setRecordings((all) => all.map((x) => (x.id === r.id ? next : x)));
+      }
+      await saveProject({ ...p, valueKeys: (p.valueKeys ?? []).filter((k) => k !== key) });
     },
 
     async addClass(name) {

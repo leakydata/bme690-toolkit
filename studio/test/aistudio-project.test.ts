@@ -28,3 +28,14 @@ test('opens the AI-Studio demo project', { skip: !existsSync(DEMO) && 'AI-Studio
   const perSpec = r.specimens.map((_, i) => r.cycles.filter((c) => c.specimen === i).length);
   assert.ok(perSpec.every((n) => n > 0), `cycles per specimen: ${perSpec}`);
 });
+
+test('brings the demo specimens\' measured caffeine across', { skip: !existsSync(DEMO) && 'AI-Studio demo not installed' }, async () => {
+  const SQL = await initSqlJs();
+  const r = openAiStudioProject(SQL, readFileSync(DEMO)).recordings[0];
+  const values = Object.fromEntries(r.specimens.map((s) => [s.name, s.values]));
+  assert.deepEqual(values['Espresso Coffee'], { 'Caffeine [mg]': 126 });
+  assert.deepEqual(values['Filter Coffee'], { 'Caffeine [mg]': 81.3434 });
+  // Warm-Up has an empty value, the air specimens none.
+  assert.equal(values['Warm-Up'], undefined);
+  assert.equal(values['Neutral Air'], undefined);
+});

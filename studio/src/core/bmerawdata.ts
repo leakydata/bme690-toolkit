@@ -4,6 +4,7 @@
  */
 import { buildCycles, buildSpecimens, emptyPoints, type LabelInfo } from './assemble.ts';
 import { newId } from './ids.ts';
+import { cleanValues } from './values.ts';
 import type { BoardConfig, Points, Recording } from './types.ts';
 
 export interface InputFile {
@@ -74,9 +75,11 @@ function parseLabels(text: string | undefined, into: Map<number, LabelInfo>) {
   }
   const info = JSON.parse(text);
   for (const l of info?.labelInformation ?? []) {
+    const values = cleanValues(l.values);
     into.set(Number(l.labelTag), {
       name: String(l.labelName ?? ''),
       description: String(l.labelDescription ?? ''),
+      ...(values ? { values } : {}),
     });
   }
 }
@@ -265,8 +268,11 @@ export function configToJson(c: BoardConfig, dateIso: string) {
   };
 }
 
-/** A recording back out as an importable .bmerawdata + .bmelabelinfo pair. */
-export function writeRecording(r: Recording): { raw: string; labels: string } {
+/** A recording back out as an importable .bmerawdata + .bmelabelinfo pair.
+ *  Given the project's classes, each label also carries its class name in an
+ *  extra "className" field, which AI-Studio ignores and the Python lab reads,
+ *  and its measured values in an extra "values" object ({"Caffeine [mg]": 126}). */
+export function writeRecording(r: Recording, classes: { id: string; name: string }[] = []): { raw: string; labels: string } {
   const date = new Date(r.importedAt).toISOString();
   const p = r.points;
   const rows: unknown[][] = new Array(p.length);
@@ -289,10 +295,10 @@ export function writeRecording(r: Recording): { raw: string; labels: string } {
     },
     rawDataBody: { dataColumns: DATA_COLUMNS, dataBlock: rows },
   };
-  const seen = new Map<number, { name: string; comment: string }>();
+  const seen = new Map<number, { name: string; comment: string; cls: string | null; values?: Record<string, number> }>();
   for (const s of r.specimens) {
     if (!seen.has(s.tag)) {
-      seen.set(s.tag, { name: s.name, comment: s.comment });
+      seen.set(s.tag, { name: s.name, comment: s.comment, cls: classes.find((c) => c.id === s.classId)?.name ?? null, values: cleanValues(s.values) });
     }
   }
   const labels = {
@@ -300,6 +306,8 @@ export function writeRecording(r: Recording): { raw: string; labels: string } {
       labelTag: tag,
       labelName: s.name,
       labelDescription: s.comment,
+      ...(s.cls ? { className: s.cls } : {}),
+      ...(s.values ? { values: s.values } : {}),
     })),
   };
   return { raw: JSON.stringify(doc), labels: JSON.stringify(labels, null, 1) };

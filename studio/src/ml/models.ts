@@ -1,7 +1,21 @@
 /**
  * Model kinds: anything that can learn from a Dataset and predict class
- * probabilities. Register new ones with registerModelKind(); the Train view
- * lists them and the Live view can run any saved model.
+ * probabilities -- or, for regression, a number. Register new ones with
+ * registerModelKind(); the Train view lists them and the Live view can run
+ * any saved model.
+ *
+ * The two tasks share one contract:
+ *
+ *   classification  nClasses >= 2, y[i] is a class index 0..nClasses-1,
+ *                   predict() returns one row of nClasses probabilities
+ *                   (summing to 1) per input row.
+ *   regression      nClasses === 0, y[i] is the measured value itself (any
+ *                   real number, e.g. mg of caffeine), predict() returns
+ *                   [value] per input row: a one-element row.
+ *
+ * A kind records the task in its saved state, so load() gives back a
+ * predictor of the same task. States saved before regression existed have
+ * no task field and are classifiers.
  */
 
 export type ParamValue = number | string | boolean;
@@ -17,6 +31,8 @@ export interface ParamSpec {
   max?: number;
   step?: number;
   options?: { value: string; label: string }[];
+  /** only offered for this task (e.g. the loss of a regression network); absent = both */
+  task?: 'classify' | 'regress';
 }
 
 export interface TrainProgress {
@@ -30,7 +46,8 @@ export interface TrainProgress {
 
 /** A trained model ready to use. */
 export interface Predictor {
-  /** probabilities per class, one row per sample, rows summing to 1 */
+  /** classification: probabilities per class, one row per sample, rows
+   *  summing to 1. Regression: [estimated value] per sample. */
   predict(x: number[][]): number[][];
   /** plain data (JSON-safe, typed arrays allowed) that load() turns back into a Predictor */
   save(): unknown;
@@ -44,6 +61,10 @@ export interface ModelKind {
   /** one or two sentences for the UI: what it is, when to use it */
   description: string;
   params: ParamSpec[];
+  /**
+   * Learn from rows x with targets y. nClasses >= 2: classification, y are
+   * class indices. nClasses === 0: regression, y are the values to estimate.
+   */
   train(
     x: number[][],
     y: number[],
@@ -65,6 +86,11 @@ export function registerModelKind(k: ModelKind): void {
 
 export function getModelKinds(): readonly ModelKind[] {
   return kinds;
+}
+
+/** The params a kind offers for a task. */
+export function paramsFor(k: ModelKind, task: 'classify' | 'regress'): ParamSpec[] {
+  return k.params.filter((p) => !p.task || p.task === task);
 }
 
 export function getModelKind(id: string): ModelKind {

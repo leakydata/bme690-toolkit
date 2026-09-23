@@ -4,11 +4,14 @@
  * specimens, heater profiles and the classes specimens were sorted into.
  *
  * AI-Studio keeps classes per algorithm; here they are per project, so
- * classes with the same name are merged.
+ * classes with the same name are merged. Specimen metadata ("Caffeine [mg]"
+ * = 126, what its regression algorithms learn) comes across as
+ * Specimen.values, taken from the original specimens.
  */
 import type { Database, SqlJsStatic } from 'sql.js';
 import { buildCycles, emptyPoints } from './assemble.ts';
 import { newId } from './ids.ts';
+import { cleanValues } from './values.ts';
 import type { BoardConfig, Recording, Specimen, SpecimenClass } from './types.ts';
 
 export interface ProjectImport {
@@ -93,6 +96,8 @@ export function openAiStudioProject(SQL: SqlJsStatic, bytes: Uint8Array): Projec
       specimenClass.set(orig, b.cls);
     }
 
+    const valuesOf = specimenValues(db);
+
     const recordings: Omit<Recording, 'projectId'>[] = [];
     for (const s of rows(db, 'select id, name, board_id from measurement_sessions order by id')) {
       const config = sessionConfig(db, Number(s.id));
@@ -119,6 +124,7 @@ export function openAiStudioProject(SQL: SqlJsStatic, bytes: Uint8Array): Projec
         start: Number(sp.start_time),
         end: Number(sp.end_time),
         classId: specimenClass.get(Number(sp.id)) ?? null,
+        ...(valuesOf.has(Number(sp.id)) ? { values: valuesOf.get(Number(sp.id)) } : {}),
       }));
 
       const points = emptyPoints(pts.length);
@@ -159,6 +165,39 @@ export function openAiStudioProject(SQL: SqlJsStatic, bytes: Uint8Array): Projec
   } finally {
     db.close();
   }
+}
+
+/**
+ * Numeric metadata of the original specimens (not the per-algorithm copies),
+ * keyed by property name. Empty or non-numeric values are skipped. Older
+ * projects without the metadata tables yield nothing.
+ */
+function specimenValues(db: Database): Map<number, Record<string, number>> {
+  const out = new Map<number, Record<string, number>>();
+  let found: Record<string, any>[];
+  try {
+    found = rows(db,
+      `select m.specimen_data_id sid, k.name name, m.value value
+       from specimen_meta_data m
+       join specimen_meta_data_keys k on k.id = m.specimen_meta_data_key_id
+       join specimen_data s on s.id = m.specimen_data_id
+       where s.clone_of_uuid is null`);
+  } catch {
+    return out;
+  }
+  const raw = new Map<number, Record<string, unknown>>();
+  for (const r of found) {
+    const name = String(r.name ?? '').trim();
+    if (!name) continue;
+    const e = raw.get(Number(r.sid)) ?? {};
+    e[name] = r.value === null ? '' : String(r.value);
+    raw.set(Number(r.sid), e);
+  }
+  for (const [sid, v] of raw) {
+    const clean = cleanValues(v);
+    if (clean) out.set(sid, clean);
+  }
+  return out;
 }
 
 function sessionConfig(db: Database, sessionId: number): BoardConfig {
