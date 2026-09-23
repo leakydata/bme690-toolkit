@@ -341,16 +341,28 @@ static esp_err_t h_ws(httpd_req_t *req)
 {
 	httpd_ws_frame_t frame = { .type = HTTPD_WS_TYPE_TEXT };
 	uint8_t buf[128];
+	esp_err_t e;
 
 	if (req->method == HTTP_GET) {
 		ESP_LOGI(TAG, "dashboard connected");
 		app_notify();   /* a fresh status right away */
 		return ESP_OK;
 	}
-	/* The dashboard sends nothing we act on; drain whatever arrives. */
-	if (httpd_ws_recv_frame(req, &frame, 0) == ESP_OK && frame.len < sizeof(buf)) {
+	/* The dashboard sends nothing we act on. Any failure -- a phone that
+	 * walked out of range, a frame we can't read whole -- must return an
+	 * error: that is what makes the server close the socket. Returning OK
+	 * leaves a dead socket that is retried forever and locks out every
+	 * other visitor. */
+	e = httpd_ws_recv_frame(req, &frame, 0);
+	if (e != ESP_OK) {
+		return e;
+	}
+	if (frame.len >= sizeof(buf)) {
+		return ESP_FAIL;
+	}
+	if (frame.len > 0) {
 		frame.payload = buf;
-		httpd_ws_recv_frame(req, &frame, frame.len);
+		return httpd_ws_recv_frame(req, &frame, frame.len);
 	}
 	return ESP_OK;
 }
@@ -376,7 +388,12 @@ static void bcast_work(void *arg)
 	if (httpd_get_client_list(server, &n, fds) == ESP_OK) {
 		for (size_t i = 0; i < n; i++) {
 			if (httpd_ws_get_fd_info(server, fds[i]) == HTTPD_WS_CLIENT_WEBSOCKET) {
-				httpd_ws_send_frame_async(server, fds[i], &frame);
+				/* A client that can't take a frame is gone; close it
+				 * rather than keep a dead socket. */
+				if (httpd_ws_send_frame_async(server, fds[i], &frame) != ESP_OK) {
+					httpd_sess_trigger_close(server, fds[i]);
+					continue;
+				}
 				count++;
 			}
 		}
@@ -529,7 +546,18 @@ static void start_http(void)
 	cfg.uri_match_fn = httpd_uri_match_wildcard;
 	cfg.max_uri_handlers = 20;
 	cfg.lru_purge_enable = true;
+	/* Notice phones that leave without closing their connection. */
+	cfg.keep_alive_enable = true;
+	cfg.keep_alive_idle = 10;
+	cfg.keep_alive_interval = 5;
+	cfg.keep_alive_count = 3;
 	cfg.stack_size = 8192;
+	/* One dropped phone can make these log a warning per failed read; the
+	 * console is also the data channel, so keep them to real errors. */
+	esp_log_level_set("httpd_txrx", ESP_LOG_ERROR);
+	esp_log_level_set("httpd_ws", ESP_LOG_ERROR);
+	esp_log_level_set("httpd_parse", ESP_LOG_ERROR);
+
 	if (httpd_start(&server, &cfg) != ESP_OK) {
 		ESP_LOGE(TAG, "web server did not start");
 		return;
