@@ -6,6 +6,7 @@
 // Feature sets and model kinds, before any page that lists or runs them.
 import '../ml/models/index.ts';
 
+import './quick/view.tsx';
 import './projects/view.tsx';
 import './data/view.tsx';
 import './explore/view.tsx';

@@ -1,0 +1,41 @@
+/* Quick experiment: big, calm, readable from a few steps away. */
+.q-steps { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 16px; }
+.q-steps li { font-size: 0.85rem; padding: 4px 10px; border-radius: 999px; background: var(--panel-2); color: var(--muted); }
+.q-steps li.on { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+
+.q-templates { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 0 0 14px; }
+.q-template {
+  font: inherit; text-align: left; cursor: pointer; display: grid; gap: 4px;
+  background: var(--panel); color: var(--text); border: 2px solid var(--line); border-radius: var(--radius); padding: 14px;
+}
+.q-template span { color: var(--muted); font-size: 0.9rem; }
+.q-template.on { border-color: var(--accent); }
+.q-template:hover { background: var(--panel-2); }
+
+.q-class { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.q-class input:first-of-type { width: 150px; font-weight: 600; }
+.q-class .q-prompt { flex: 1 1 260px; min-width: 0; }
+
+.q-methods { display: grid; gap: 10px; }
+.q-method { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.q-method.on { border-color: var(--accent); background: var(--panel-2); }
+.q-method input { margin-top: 4px; }
+
+.btn.big { font-size: 1.05rem; padding: 11px 22px; }
+
+.q-progress { height: 10px; background: var(--panel-2); border-radius: 999px; overflow: hidden; margin: 0 0 8px; }
+.q-progress > div { height: 100%; background: var(--accent); transition: width 0.25s linear; }
+
+.q-now {
+  background: var(--panel); border: 3px solid var(--line); border-radius: 16px;
+  padding: 28px 20px; margin: 14px 0; text-align: center; display: grid; justify-items: center; gap: 12px;
+}
+.q-label { font-size: clamp(1.8rem, 6vw, 3rem); font-weight: 800; line-height: 1.1; }
+.q-clock { font-size: clamp(3rem, 14vw, 6rem); font-weight: 700; line-height: 1; }
+.q-instruction { font-size: 1.1rem; max-width: 46ch; margin: 0; }
+.q-live { min-height: 260px; align-content: center; }
+.q-big { font-size: clamp(2.6rem, 12vw, 6rem); font-weight: 800; letter-spacing: 0.02em; line-height: 1; }
+
+.q-result { text-align: center; }
+.q-verdict { font-size: 1.5rem; font-weight: 700; }
+.q-score { font-size: clamp(3rem, 12vw, 5rem); font-weight: 800; line-height: 1.1; }

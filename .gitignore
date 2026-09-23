@@ -5,9 +5,9 @@ __pycache__/
 build/
 dist/
 # Captured data and projects stay local
-recordings/
-projects/
-exports/
+/recordings/
+/projects/
+/exports/
 # Never commit vendor SDKs -- scripts/setup-coines.sh fetches them
 third_party/coines*/
 *.bmerawdata

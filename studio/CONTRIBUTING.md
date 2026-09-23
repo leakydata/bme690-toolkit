@@ -47,6 +47,7 @@ Most features are one of these, and none needs changes elsewhere:
 | you want to add | do this |
 |---|---|
 | a page | a folder in `src/plugins/`, calling `registerView()`; import it in `plugins/index.ts` |
+| a guided experiment template | add it to `TEMPLATES` in `plugins/quick/plan.ts` |
 | a way to turn cycles into features | call `registerFeatureSet()` (see `ml/features.ts`) |
 | a model type | call `registerModelKind()` (see `ml/models.ts`) |
 
@@ -59,7 +60,8 @@ everything is saved and every page stays in sync.
   so the same files run under Vite and under Node's test runner.
 - **Style with the classes in `ui/styles.css`** (`card`, `btn`, `btn primary`,
   `grid`, `row`, `notice`, `pill`, `table.data`, `muted`, `small`, `num` ...).
-  Don't add per-page stylesheets; add a class there if something is missing.
+  Styles only one page needs go in a CSS file in that page's folder, imported
+  by its view, with class names prefixed for the page (`q-`, `ex-` ...).
   Colours come from CSS variables, so light and dark mode work for free.
   Sensor colours are `--s0` … `--s7` (`sensorColor(i)` in `ui/format.ts`).
 - **No network requests** to anything but the user's own board. The app must
