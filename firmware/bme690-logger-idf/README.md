@@ -20,8 +20,13 @@ power comparison in the top-level README.
 . ~/esp-idf/export.sh
 idf.py set-target esp32s3
 idf.py build
-idf.py -p /dev/ttyACM0 flash monitor
+idf.py -p /dev/ttyUSB0 flash monitor
 ```
+
+The DevKitC has two USB-C ports. The console prints on both: the `UART` port
+(a CH340 or CP210x bridge, usually `/dev/ttyUSB0`) and the `USB` port (native
+USB serial/JTAG, `/dev/ttyACM0`). Flash through `UART`; it is the most
+reliable.
 
 ## Wiring (ESP32-S3 DevKitC)
 
@@ -63,5 +68,5 @@ D,0,10782,33.47,998.78,35.46,234700.90,0,1
 ```
 
 ```bash
-bme690 ingest --port /dev/ttyACM0 -o coffee.bmerawdata --labels "coffee:300,air:300"
+bme690 ingest --port /dev/ttyUSB0 -o coffee.bmerawdata --labels "coffee:300,air:300"
 ```

@@ -1,5 +1,7 @@
-# ESP32-S3, native USB serial/JTAG for the console so no UART bridge is needed.
-CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+# Console on UART0 (the DevKitC "UART" port) and mirrored to the native
+# USB serial/JTAG port, so output appears on whichever port is plugged in.
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG=y
 
 # The compensation path is double-precision in Bosch's reference; keep printf
 # able to render it.

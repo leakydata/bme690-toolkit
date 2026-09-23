@@ -16,6 +16,8 @@ struct bme690_idf_ctx {
  * Chip select is driven by hand rather than by the SPI peripheral: eight
  * sensors share one bus and the ESP32's hardware CS lines are limited to
  * three per host, so a plain GPIO per sensor is simpler and scales.
+ * Every sensor shares one SPI device handle; the bus is assumed to be the
+ * same host at the same clock for all of them.
  */
 int bme690_idf_attach(struct bme690_dev *dev, struct bme690_idf_ctx *ctx,
 		      spi_host_device_t host, gpio_num_t cs, int freq_hz);

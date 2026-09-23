@@ -60,6 +60,8 @@ static void idf_delay_ms(uint32_t ms)
 	vTaskDelay(pdMS_TO_TICKS(ms ? ms : 1));
 }
 
+static spi_device_handle_t shared_spi;
+
 int bme690_idf_attach(struct bme690_dev *dev, struct bme690_idf_ctx *ctx,
 		      spi_host_device_t host, gpio_num_t cs, int freq_hz)
 {
@@ -79,9 +81,14 @@ int bme690_idf_attach(struct bme690_dev *dev, struct bme690_idf_ctx *ctx,
 	}
 	gpio_set_level(cs, 1);   /* idle high */
 
-	if (spi_bus_add_device(host, &devcfg, &ctx->spi) != ESP_OK) {
+	/* One SPI device serves every sensor. ESP-IDF allows only six devices
+	 * per bus (SOC_SPI_MAX_CS_NUM), so a device per sensor silently loses
+	 * sensors 6 and 7; with CS driven by hand the handle is shareable. */
+	if (shared_spi == NULL &&
+	    spi_bus_add_device(host, &devcfg, &shared_spi) != ESP_OK) {
 		return -1;
 	}
+	ctx->spi = shared_spi;
 	ctx->cs = cs;
 
 	dev->read = idf_read;
