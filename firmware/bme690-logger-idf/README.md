@@ -131,6 +131,20 @@ The RGB LED pulses once every two seconds:
 | red | a problem needs attention, such as a sensor not answering or a card error |
 | white blink | a button press or command was received |
 
+### Updating the firmware over WiFi
+
+From version 2.1, no cable is needed. While you're online, download
+**bme690-logger-app.bin** from
+[leakydata.github.io/bme690-toolkit](https://leakydata.github.io/bme690-toolkit/).
+Then join the board's WiFi, open the dashboard's **Files** tab, and choose the
+file under **Firmware**. The board checks the file, installs it and restarts,
+in under a minute. If the new version fails to start, the board goes back to
+the old one by itself.
+
+Updating restarts the board, so a burn-in in progress ends; start it again for
+the time that was left. Boards on a version before 2.1 need one install over
+USB first, because 2.1 changes the flash layout to make room for updates.
+
 ### Getting data into BME AI-Studio
 
 A recording is saved to the card as `bme690/s0007_0000.bmerawdata`,

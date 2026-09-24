@@ -6,7 +6,7 @@
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 
-#define FW_VERSION  "2.0.0"
+#define FW_VERSION  "2.1.0"
 #define NUM_SENSORS 8
 
 /* Sensor bus. Any free GPIOs work; these avoid the strapping pins, the

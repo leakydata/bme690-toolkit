@@ -12,6 +12,7 @@
 #include "app.h"
 #include "board.h"
 #include "net.h"
+#include "ota.h"
 #include "storage.h"
 #include "ui.h"
 #include "esp_log.h"
@@ -711,6 +712,7 @@ cJSON *app_status_json(void)
 	storage_get_status(&st);
 
 	cJSON_AddStringToObject(root, "fw", FW_VERSION);
+	cJSON_AddStringToObject(root, "fw_build", ota_build());
 	cJSON_AddStringToObject(root, "board", net_board_name());
 	cJSON_AddNumberToObject(root, "uptime_ms", (double)(esp_timer_get_time() / 1000));
 	cJSON_AddBoolToObject(root, "time_set", clock_set());

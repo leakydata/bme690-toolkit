@@ -59,7 +59,9 @@ jobs:
           cp web/install/index.html site/
           cp -r studio/dist site/studio
           sudo cp "$fw/build/merged.bin" site/bme690-logger-esp32s3.bin
-          sudo chown "$(id -u)" site/bme690-logger-esp32s3.bin
+          # the app image alone, for updates over WiFi from the board's dashboard
+          sudo cp "$fw/build/bme690_logger_idf.bin" site/bme690-logger-app.bin
+          sudo chown "$(id -u)" site/bme690-logger-esp32s3.bin site/bme690-logger-app.bin
           sed "s/\"version\": \"dev\"/\"version\": \"$version (${GITHUB_SHA::7})\"/" \
             web/install/manifest.json > site/manifest.json
           ls -la site

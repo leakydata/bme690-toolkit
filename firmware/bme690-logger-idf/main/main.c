@@ -12,6 +12,7 @@
 #include "config.h"
 #include "console.h"
 #include "net.h"
+#include "ota.h"
 #include "sensors.h"
 #include "storage.h"
 #include "ui.h"
@@ -33,7 +34,7 @@ void app_main(void)
 	}
 	vTaskDelay(pdMS_TO_TICKS(1000));   /* let a serial monitor attach */
 
-	printf("\n=== BME690 8x shuttle logger %s (%s) ===\n", FW_VERSION, net_board_name());
+	printf("\n=== BME690 8x shuttle logger %s, build %s (%s) ===\n", FW_VERSION, ota_build(), net_board_name());
 
 	storage_mount();
 
@@ -56,4 +57,5 @@ void app_main(void)
 	app_start(cfg_err);
 	ui_start();
 	console_start();
+	ota_confirm_later();
 }

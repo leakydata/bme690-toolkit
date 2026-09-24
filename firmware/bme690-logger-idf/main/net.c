@@ -8,6 +8,7 @@
  * SPDX-License-Identifier: MIT */
 #include "net.h"
 #include "app.h"
+#include "ota.h"
 #include "storage.h"
 #include "esp_event.h"
 #include "esp_http_server.h"
@@ -533,6 +534,7 @@ static void start_http(void)
 		{ .uri = "/api/label", .method = HTTP_POST, .handler = h_label },
 		{ .uri = "/api/time", .method = HTTP_POST, .handler = h_time },
 		{ .uri = "/api/burnin", .method = HTTP_POST, .handler = h_burnin },
+		{ .uri = "/api/ota", .method = HTTP_POST, .handler = ota_handler },
 		{ .uri = "/api/rescan", .method = HTTP_POST, .handler = h_rescan },
 		{ .uri = "/api/files", .method = HTTP_GET, .handler = h_files },
 		{ .uri = "/api/files/*", .method = HTTP_GET, .handler = h_file_get },
@@ -544,7 +546,7 @@ static void start_http(void)
 	};
 
 	cfg.uri_match_fn = httpd_uri_match_wildcard;
-	cfg.max_uri_handlers = 20;
+	cfg.max_uri_handlers = 24;
 	cfg.lru_purge_enable = true;
 	/* Notice phones that leave without closing their connection. */
 	cfg.keep_alive_enable = true;

@@ -167,7 +167,7 @@ a{color:var(--acc)}
 <p class="note">Gas resistance at each of the 10 heater steps: latest complete cycle solid, the one before dashed. A healthy sensor repeats the same shape every cycle, highest at the coolest steps. Flat, empty or jumping bars point to a problem.</p>
 </div>
 </div>
-<div class="card"><h2>Gas trace, one line per heater step</h2><div id="steplg" class="chips"></div><canvas id="csteps" class="tall"></canvas><p class="note">Uses the time window chosen on Live graphs.</p></div>
+<div class="card"><h2>Gas trace, one line per heater step</h2><p class="note" style="margin-top:0">These are the 10 steps of this sensor's heater profile, not 10 sensors.</p><div id="steplg" class="chips"></div><canvas id="csteps" class="tall"></canvas><p class="note">Uses the time window chosen on Live graphs.</p></div>
 </section>
 
 <section id="t-rec" hidden>
@@ -222,6 +222,15 @@ a{color:var(--acc)}
 <div class="row" style="justify-content:space-between"><h2 style="margin:0">Recordings on the card</h2><button id="frefresh" class="btn sm">Refresh</button></div>
 <p class="note">A session (e.g. s0007) is split into 15-minute chunks. Keep every <code>.bmelabelinfo</code> file next to its <code>.bmerawdata</code> file with the same name, or AI-Studio loses the label names. If a download does nothing, open <b>http://192.168.4.1</b> in your normal browser instead of the WiFi sign-in window.</p>
 <div id="flist"></div>
+</div>
+<div class="card">
+<h2>Firmware</h2>
+<p id="fwinfo" class="mut sm">–</p>
+<p class="note">To update: while you are on the internet, download <b>bme690-logger-app.bin</b> from
+<b>leakydata.github.io/bme690-toolkit</b> (Firmware section). Then come back to this page and choose the file here.
+The board checks it, installs it and restarts; if the new version fails to start, the board goes back to this one by itself.</p>
+<div class="row"><button id="fwpick" class="btn">Choose firmware file…</button><input id="fwfile" type="file" accept=".bin" hidden></div>
+<div id="fwstate"></div>
 </div>
 </section>
 
@@ -296,7 +305,7 @@ function startPoll(){if(pollT)return;poll();pollT=setInterval(poll,2000)}
 function stopPoll(){clearInterval(pollT);pollT=null}
 async function poll(){try{const j=await api('GET','/api/status');if(conn!='live'){setConn('poll');onStatus(j,true)}}catch(e){if(conn!='live')setConn('off')}}
 async function loadCfg(){try{const c=await api('GET','/api/config');if(c&&c.configBody){CFG=c;stepOpts();if(V.tab=='sensor')renderSensor()}}catch(e){}}
-function stepOpts(){$('#stepsel').innerHTML='<option value="-1">All steps</option>'+stepTemps(sensors()[0]).map((t,i)=>'<option value="'+i+'"'+(i==V.step?' selected':'')+'>Step '+(i+1)+' ('+t+' °C)</option>').join('')}
+function stepOpts(){$('#stepsel').innerHTML='<option value="-1">All steps</option>'+stepTemps(sensors()[0]).map((t,i)=>'<option value="'+i+'"'+(i==V.step?' selected':'')+'>Heater step '+(i+1)+' ('+t+' °C)</option>').join('')}
 
 function onStatus(j,fromPoll){
 if(!j||typeof j!='object')return;S=j;
@@ -356,7 +365,8 @@ const stepCol=i=>'hsl('+(215-i*21)+',70%,50%)';
 /* ---------- rendering ---------- */
 const ST={ok:['Working','p-ok'],missing:['Not found','p-err'],lost:['Lost contact','p-err'],suspect:['Odd readings','p-warn'],sleeping:['Resting','p-ok'],inactive:['Switched off','p-mut'],unknown:['No data yet','p-mut']};
 const WHY={missing:'Has never answered. Usually its CS wire is loose or on the wrong pin.',lost:'Answered at first, then stopped. Look for a loose wire or a bad contact.',suspect:'Answers, but its readings look impossible. Could be a noisy wire or a damaged sensor.',unknown:'No reading yet.'};
-function renderStatus(){
+function renderFw(){const e=$('#fwinfo');if(e)e.textContent=S?'This board runs version '+(S.fw||'?')+(S.fw_build?' (build '+S.fw_build+')':'')+'.':'–'}
+function renderStatus(){renderFw();
 const ss=sensors(),probs=(S&&Array.isArray(S.problems)?S.problems:[]).filter(p=>p&&p.text);
 $('#board').textContent=S?[S.board,S.fw&&'firmware '+S.fw,S.config&&S.config.name].filter(Boolean).join(' · '):'';
 const act=ss.filter(s=>s.state!='inactive').length,nok=ss.filter(s=>s.state=='ok'||s.state=='sleeping').length,serious=probs.filter(p=>p.level!='info'),rec=!!(S&&S.recording),card=S&&S.card;
@@ -394,7 +404,7 @@ lineChart($('#cpress'),pick('press'),{fmt:v=>+v.toFixed(2)})}
 
 function renderSensor(){
 const s=sensors()[V.sel],l=s.last,st=ST[s.state]||ST.unknown,ck=[];
-const t=stepTemps(s);html($('#steplg'),t.map((x,i)=>'<span class="chip" style="--c:'+stepCol(i)+';cursor:default"><i></i>'+(i+1)+': '+x+' °C</span>').join(''));
+const t=stepTemps(s);html($('#steplg'),t.map((x,i)=>'<span class="chip" style="--c:'+stepCol(i)+';cursor:default"><i></i>Heater step '+(i+1)+' · '+x+' °C</span>').join(''));
 $('#shead').textContent='Health check: '+s.part+' (sensor '+V.sel+')';
 const add=(ok,t)=>ck.push('<li><span class="pill '+(ok===1?'p-ok':ok===0?'p-err':ok===2?'p-warn':'p-mut')+'">'+(ok===1?'OK':ok===0?'Fix':ok===2?'Check':'–')+'</span><span>'+t+'</span></li>');
 const wire='the wire from shuttle '+esc(s.shuttle_pin)+' to GPIO'+esc(s.gpio);
@@ -499,6 +509,25 @@ else if(d.bd&&BR.out)save(BR.out[d.bd],BR.out.name+(d.bd=='raw'?'.bmerawdata':'.
 else if(d.dl&&MOCK){e.preventDefault();save(new Blob([mock.file(d.dl)],{type:'application/json'}),d.dl)}
 else if(d.del){const n=d.del;confirmUI(t.closest('.frow'),'Delete <b>'+esc(n)+'</b> from the card? This cannot be undone.'+(/rawdata$/.test(n)?' Delete its .bmelabelinfo too if you no longer need this chunk.':''),'Delete',async()=>{
 try{await api('DELETE','/api/files/'+encodeURIComponent(n));toast('Deleted '+n)}catch(er){toast('Could not delete: '+er.message,1)}loadFiles()})}});
+$('#fwpick').onclick=()=>$('#fwfile').click();
+$('#fwfile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+if(!/\.bin$/i.test(f.name)){toast('Choose the firmware file, bme690-logger-app.bin.',1);return}
+confirmUI($('#fwpick').parentNode,'Install <b>'+esc(f.name)+'</b>? The board restarts afterwards: a recording in progress continues in a new file, and <b>a burn-in in progress ends</b> (start it again for the time that was left).','Install',()=>uploadFw(f))};
+function uploadFw(f){const st=$('#fwstate');const old=S&&S.fw_build;
+const show=(t,bad)=>html(st,'<div class="card" style="margin:12px 0 0;background:'+(bad?'var(--errb,#fde8e8)':'var(--card)')+'">'+t+'</div>');
+show('Uploading… <b id="fwpct">0%</b> Keep this page open and stay close to the board.');
+if(MOCK){let p=0;const t=setInterval(()=>{p+=20;const e=$('#fwpct');if(e)e.textContent=p+'%';if(p>=100){clearInterval(t);show('Installed. The board is restarting… (mock)')}},300);return}
+const x=new XMLHttpRequest();x.open('POST','/api/ota');x.timeout=180000;
+x.upload.onprogress=ev=>{if(ev.lengthComputable){const e=$('#fwpct');if(e)e.textContent=Math.round(100*ev.loaded/ev.total)+'%'}};
+x.onload=()=>{let j=null;try{j=JSON.parse(x.responseText)}catch(e){}
+if(x.status!=200||!j||j.error){show('Not installed: '+esc(j&&j.error?j.error:'the board answered HTTP '+x.status)+' The board is unchanged.',1);return}
+show('Installed. The board is restarting; this page reconnects by itself in about half a minute.');
+const t0=Date.now();const wait=setInterval(async()=>{try{const r=await fetch('/api/status',{cache:'no-store'});const n=await r.json();
+if(n.fw_build&&n.fw_build!==old){clearInterval(wait);onStatus(n);show('Done: the board now runs version '+esc(n.fw)+' (build '+esc(n.fw_build)+').')}
+else if(Date.now()-t0>30000&&n.fw_build===old){clearInterval(wait);onStatus(n);show('The board restarted on its previous version: the new one did not start properly, so it rolled back. Try downloading the file again.',1)}}catch(e){}
+if(Date.now()-t0>120000){clearInterval(wait);show('The board has not come back yet. If its WiFi network is gone, reconnect to it; if it stays away, press RST on the board.',1)}},3000)};
+x.onerror=x.ontimeout=()=>show('The upload was interrupted. The board is unchanged; move closer and try again.',1);
+x.send(f)}
 $('#rescan').onclick=()=>confirmUI($('#rescan').parentNode,'Re-checking probes all eight sensors again and restarts their heater cycles. Measurements pause for a few seconds and the graphs will show a short gap.','Re-check now',async()=>{
 try{await post('/api/rescan',null,'Re-checking sensors…');cyc.forEach(c=>{c.cur=[];c.ls=-1});loadCfg()}catch(e){}});
 $('#recbtn').onclick=async()=>{const on=!(S&&S.recording);$('#recbtn').disabled=true;try{await post('/api/record',{on},on?'Recording started':'Recording stopped')}catch(e){}renderRec();if(V.tab=='files')loadFiles()};
@@ -533,7 +562,7 @@ const files=[['s0006_0000.bmerawdata',2841223],['s0006_0000.bmelabelinfo',142],[
 const card={present:true,total_mb:14893,free_mb:13859,error:null};
 const sen=WIRE.map((w,i)=>({index:i,part:w[0],shuttle_pin:w[1],gpio:w[2],state:i==6?'missing':'ok',chip_id:i==6?0:97,par_t1:i==6?0:22400+i*53,heater_profile:'heater_354',cycle_ms:10780,cycles:i==6?0:330,heat_stable_pct:i==6?0:99.2+i*.08,last:null}));
 const cl=o=>JSON.parse(JSON.stringify(o)),fname=()=>'s'+String(sess).padStart(4,'0')+'_'+String(chunk).padStart(4,'0');
-const status=()=>({fw:'2.0.0',board:'BME690-3F2A',uptime_ms:up(),time_set:tset,unix:Math.floor(tset?Date.now()/1000+toff:up()/1000),recording:rec,session:'s'+String(sess).padStart(4,'0'),file:rec?fname()+'.bmerawdata':null,rows_written:rows,
+const status=()=>({fw:'2.1.0',fw_build:'mock',board:'BME690-3F2A',uptime_ms:up(),time_set:tset,unix:Math.floor(tset?Date.now()/1000+toff:up()/1000),recording:rec,session:'s'+String(sess).padStart(4,'0'),file:rec?fname()+'.bmerawdata':null,rows_written:rows,
 label:{tag,name:(labels.find(l=>l.tag==tag)||{}).name||''},labels:cl(labels),card:Object.assign({},card),config:mcfg,burnin:mbi,wifi:{ssid:'BME690-3F2A',clients:1},
 sensors:cl(sen),problems:[{level:'error',sensor:6,text:'Sensor 6 (U7) is not answering. Check the wire from shuttle P2-7 to GPIO15.'}].concat(tset?[]:[{level:'info',sensor:null,text:'The board clock is not set yet. This page sets it automatically.'}])});
 const send=o=>{if(sock&&sock.readyState==1)sock.onmessage({data:JSON.stringify(o)})};
