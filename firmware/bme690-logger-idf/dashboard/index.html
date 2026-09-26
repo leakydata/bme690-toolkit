@@ -233,6 +233,8 @@ press Remember: from then on the board spots swapped chip-select wires and tells
 <div class="card">
 <h2>Firmware</h2>
 <p id="fwinfo" class="mut sm">–</p>
+<p id="rstinfo" class="sm"></p>
+<div id="crashbox"></div>
 <p class="note">To update: while you are on the internet, download <b>bme690-logger-app.bin</b> from
 <b>leakydata.github.io/bme690-toolkit</b> (Firmware section). Then come back to this page and choose the file here.
 The board checks it, installs it and restarts; if the new version fails to start, the board goes back to this one by itself.</p>
@@ -372,7 +374,12 @@ const stepCol=i=>'hsl('+(215-i*21)+',70%,50%)';
 /* ---------- rendering ---------- */
 const ST={ok:['Working','p-ok'],missing:['Not found','p-err'],lost:['Lost contact','p-err'],suspect:['Odd readings','p-warn'],sleeping:['Resting','p-ok'],inactive:['Switched off','p-mut'],unknown:['No data yet','p-mut']};
 const WHY={missing:'Has never answered. Usually its CS wire is loose or on the wrong pin.',lost:'Answered at first, then stopped. Look for a loose wire or a bad contact.',suspect:'Answers, but its readings look impossible. Could be a noisy wire or a damaged sensor.',unknown:'No reading yet.'};
-function renderFw(){const e=$('#fwinfo');if(e)e.textContent=S?'This board runs version '+(S.fw||'?')+(S.fw_build?' (build '+S.fw_build+')':'')+'.':'–'}
+function renderFw(){const e=$('#fwinfo');if(e)e.textContent=S?'This board runs version '+(S.fw||'?')+(S.fw_build?' (build '+S.fw_build+')':'')+'.':'–';
+const rs=S&&S.restart,ri=$('#rstinfo'),cb=$('#crashbox');if(!ri||!cb)return;
+if(!rs){ri.textContent='';html(cb,'');return}
+ri.innerHTML='<b>Last restart:</b> '+esc(rs.text)+' <span class="mut">('+esc(rs.boots)+' starts, '+esc(rs.crashes)+' of them after a crash or power dip, since this board was first set up.)</span>';
+html(cb,rs.report?'<div class="row" style="margin:6px 0 10px"><a class="btn" href="/api/crash" download>Download crash report</a><button id="crashclr" class="btn">Delete it</button><span class="mut sm">It crashed in <b>'+esc(rs.report.task)+'</b> at '+esc(rs.report.pc)+'.</span></div>':'');
+const b=$('#crashclr');if(b)b.onclick=async()=>{try{await api('DELETE','/api/crash');toast('Crash report deleted');const n=await api('GET','/api/status');onStatus(n)}catch(er){toast('Could not delete it: '+er.message,1)}}}
 function renderChips(){const e=$('#chipinfo');if(!e)return;const c=S&&S.chips;
 if(!c){e.textContent='–';return}
 if(c.remembered){e.textContent='Checking each sensor against the chip it had when you confirmed the wiring'+(c.saved?' ('+new Date(c.saved*1000).toLocaleDateString()+')':'')+'.';$('#chipsave').textContent='Remember again';$('#chipforget').hidden=false}
@@ -575,7 +582,7 @@ const files=[['s0006_0000.bmerawdata',2841223],['s0006_0000.bmelabelinfo',142],[
 const card={present:true,total_mb:14893,free_mb:13859,error:null};
 const sen=WIRE.map((w,i)=>({index:i,part:w[0],shuttle_pin:w[1],gpio:w[2],state:i==6?'missing':'ok',chip_id:i==6?0:97,par_t1:i==6?0:22400+i*53,heater_profile:'heater_354',cycle_ms:10780,cycles:i==6?0:330,heat_stable_pct:i==6?0:99.2+i*.08,last:null}));
 const cl=o=>JSON.parse(JSON.stringify(o)),fname=()=>'s'+String(sess).padStart(4,'0')+'_'+String(chunk).padStart(4,'0');
-const status=()=>({fw:'2.1.0',fw_build:'mock',board:'BME690-3F2A',uptime_ms:up(),time_set:tset,unix:Math.floor(tset?Date.now()/1000+toff:up()/1000),recording:rec,session:'s'+String(sess).padStart(4,'0'),file:rec?fname()+'.bmerawdata':null,rows_written:rows,
+const status=()=>({fw:'2.3.0',fw_build:'mock',restart:{reason:'power-on',text:'It was switched on.',crash:false,boots:3,crashes:0,report:null},board:'BME690-3F2A',uptime_ms:up(),time_set:tset,unix:Math.floor(tset?Date.now()/1000+toff:up()/1000),recording:rec,session:'s'+String(sess).padStart(4,'0'),file:rec?fname()+'.bmerawdata':null,rows_written:rows,
 label:{tag,name:(labels.find(l=>l.tag==tag)||{}).name||''},labels:cl(labels),card:Object.assign({},card),config:mcfg,burnin:mbi,chips:mchips,wifi:{ssid:'BME690-3F2A',clients:1},
 sensors:cl(sen),problems:[{level:'error',sensor:6,text:'Sensor 6 (U7) is not answering. Check the wire from shuttle P2-7 to GPIO15.'}].concat(tset?[]:[{level:'info',sensor:null,text:'The board clock is not set yet. This page sets it automatically.'}])});
 const send=o=>{if(sock&&sock.readyState==1)sock.onmessage({data:JSON.stringify(o)})};

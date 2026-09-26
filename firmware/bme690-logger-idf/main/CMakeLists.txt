@@ -1,10 +1,10 @@
 idf_component_register(
     SRCS "main.c" "app.c" "config.c" "console.c" "net.c" "sensors.c"
-         "storage.c" "ui.c" "ota.c" "chips.c" "bme690_idf.c" "../../common/bme690.c"
+         "storage.c" "ui.c" "ota.c" "chips.c" "diag.c" "bme690_idf.c" "../../common/bme690.c"
     INCLUDE_DIRS "." "../../common"
     REQUIRES esp_driver_spi esp_driver_gpio esp_driver_sdspi esp_driver_uart
              esp_timer esp_wifi esp_netif esp_event esp_http_server nvs_flash
-             fatfs json app_update esp_app_format
+             fatfs json app_update esp_app_format espcoredump esp_partition
     EMBED_FILES "${CMAKE_CURRENT_BINARY_DIR}/dashboard.html.gz"
 )
 

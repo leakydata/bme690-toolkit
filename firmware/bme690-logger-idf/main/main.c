@@ -10,6 +10,7 @@
 #include "app.h"
 #include "board.h"
 #include "config.h"
+#include "diag.h"
 #include "console.h"
 #include "net.h"
 #include "ota.h"
@@ -32,6 +33,7 @@ void app_main(void)
 		nvs_flash_erase();
 		nvs_flash_init();
 	}
+	diag_boot();   /* why did we restart? before anything else can go wrong */
 	vTaskDelay(pdMS_TO_TICKS(1000));   /* let a serial monitor attach */
 
 	printf("\n=== BME690 8x shuttle logger %s, build %s (%s) ===\n", FW_VERSION, ota_build(), net_board_name());

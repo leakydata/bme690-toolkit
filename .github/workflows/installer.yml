@@ -67,6 +67,14 @@ jobs:
           ls -la site
           cat site/manifest.json
 
+      # The debug symbols of this exact build: needed to turn a crash report
+      # downloaded from a board's dashboard into file and line numbers.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-elf-${{ github.sha }}
+          path: firmware/bme690-logger-idf/build/bme690_logger_idf.elf
+          retention-days: 90
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

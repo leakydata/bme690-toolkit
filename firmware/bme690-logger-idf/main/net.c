@@ -9,6 +9,7 @@
 #include "net.h"
 #include "app.h"
 #include "ota.h"
+#include "diag.h"
 #include "storage.h"
 #include "esp_event.h"
 #include "esp_http_server.h"
@@ -550,6 +551,8 @@ static void start_http(void)
 		{ .uri = "/api/time", .method = HTTP_POST, .handler = h_time },
 		{ .uri = "/api/burnin", .method = HTTP_POST, .handler = h_burnin },
 		{ .uri = "/api/chips", .method = HTTP_POST, .handler = h_chips },
+		{ .uri = "/api/crash", .method = HTTP_GET, .handler = diag_crash_get },
+		{ .uri = "/api/crash", .method = HTTP_DELETE, .handler = diag_crash_delete },
 		{ .uri = "/api/ota", .method = HTTP_POST, .handler = ota_handler },
 		{ .uri = "/api/rescan", .method = HTTP_POST, .handler = h_rescan },
 		{ .uri = "/api/files", .method = HTTP_GET, .handler = h_files },
@@ -562,7 +565,7 @@ static void start_http(void)
 	};
 
 	cfg.uri_match_fn = httpd_uri_match_wildcard;
-	cfg.max_uri_handlers = 24;
+	cfg.max_uri_handlers = 28;
 	cfg.lru_purge_enable = true;
 	/* Notice phones that leave without closing their connection. */
 	cfg.keep_alive_enable = true;

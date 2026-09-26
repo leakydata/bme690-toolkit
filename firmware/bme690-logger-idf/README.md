@@ -148,6 +148,23 @@ Updating restarts the board, so a burn-in in progress ends; start it again for
 the time that was left. Boards on a version before 2.1 need one install over
 USB first, because 2.1 changes the flash layout to make room for updates.
 
+### Restarts and crash reports
+
+The board records why it last restarted: switched on, an update, a crash, a
+watchdog, or a supply dip (brownout). **Files → Firmware** on the dashboard
+shows it, and the **Health** tab warns in plain English after anything
+unexpected. For a brownout that means "use a better cable or charger".
+
+- **Watchdog:** if the firmware ever freezes, the board restarts itself
+  within 30 seconds instead of going silent.
+- **Crash report:** a crash saves a report in its own flash area. Download it
+  from **Files → Firmware** and attach it to an issue. The matching debug file
+  of every build is kept as an artifact of the GitHub Actions run that built
+  it, and `idf.py coredump-info -c bme690-crash-report.bin` with that ELF
+  turns the report into file and line numbers. The report area is created by a
+  USB install (the browser installer) of version 2.3 or later; a board updated
+  only over WiFi gets everything else but no saved report until then.
+
 ### Getting data into BME AI-Studio
 
 A recording is saved to the card as `bme690/s0007_0000.bmerawdata`,

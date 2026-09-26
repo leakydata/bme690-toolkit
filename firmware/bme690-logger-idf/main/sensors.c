@@ -13,6 +13,7 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "esp_task_wdt.h"
 #include <string.h>
 
 #define POLL_MS            40
@@ -321,6 +322,9 @@ static void poll(int i, int64_t now)
 
 static void sensor_task(void *arg)
 {
+	/* The task watchdog restarts the board if this loop ever stops -- a
+	 * frozen board that keeps its sensors silent helps nobody. */
+	esp_task_wdt_add(NULL);
 	bring_up();
 
 	for (;;) {
@@ -364,6 +368,7 @@ static void sensor_task(void *arg)
 				break;
 			}
 		}
+		esp_task_wdt_reset();
 		vTaskDelay(pdMS_TO_TICKS(POLL_MS));
 	}
 }

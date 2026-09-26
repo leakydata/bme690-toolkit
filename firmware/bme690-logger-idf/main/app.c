@@ -12,6 +12,7 @@
 #include "app.h"
 #include "board.h"
 #include "chips.h"
+#include "diag.h"
 #include "net.h"
 #include "ota.h"
 #include "storage.h"
@@ -713,6 +714,9 @@ static void diagnose(struct problems *p, const struct sensor_info *info,
 			    "watching the drift, not for training.",
 			    (long long)(left / 60), (long long)(left % 60));
 	}
+	if (diag_problem()) {
+		add_problem(p, LEVEL_WARN, -1, "%s", diag_problem());
+	}
 	diagnose_chips(p, info);
 	if (config_error[0]) {
 		add_problem(p, LEVEL_ERROR, -1, "%s", config_error);
@@ -817,6 +821,8 @@ cJSON *app_status_json(void)
 	} else {
 		cJSON_AddNullToObject(o, "error");
 	}
+
+	diag_add_status(root);
 
 	o = cJSON_AddObjectToObject(root, "chips");
 	cJSON_AddBoolToObject(o, "remembered", chips_known());
