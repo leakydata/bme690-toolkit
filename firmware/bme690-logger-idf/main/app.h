@@ -31,6 +31,9 @@ int app_reset_config(char *err, size_t errlen);
 /* Hold all sensors at Bosch's stabilization profile for some hours,
  * recording, then return to the previous configuration. */
 int app_burnin(bool on, float hours, char *err, size_t errlen);
+/* Remember the chip answering in every slot, once the user has checked the
+ * wiring (remember = true), or forget them. See chips.h. */
+int app_chips(bool remember, char *err, size_t errlen);
 
 /* Status object as documented in API.md. Caller frees. */
 cJSON *app_status_json(void);

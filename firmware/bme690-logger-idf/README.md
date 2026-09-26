@@ -26,6 +26,9 @@ a PC or an app.
 
 ## Wiring
 
+The full wiring guide, with a diagram and the DevKitC header pin for every wire, is
+[docs/wiring.md](../../docs/wiring.md).
+
 The shuttle has two rows of pins. **P1** is the 7-pin row and **P2** is the
 9-pin row. Pin 1 of each row is marked on the board.
 

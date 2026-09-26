@@ -93,6 +93,7 @@ D,<sensor>,<ms>,<temp_C>,<press_hPa>,<hum_pct>,<gas_ohm>,<step>,<stable>
 | `DELETE /api/config` | — | back to the factory default HP-354 (removes `.bmeconfig` files from the card) |
 | `POST /api/burnin` `{"on":true,"hours":12}` | `burnin 12` / `burnin stop` | stabilise new sensors: Bosch HP-001 (320 C) on all eight, recorded under the label "burn-in", then back to the previous configuration. `status.burnin` is `{"hours":12,"remaining_s":…}` while it runs, else `null` |
 | `POST /api/ota` body: `bme690-logger-app.bin` | — | install a firmware update over WiFi. The file is checked (ESP32-S3, this project) before anything is written; the board restarts on success and rolls back by itself if the new version fails to start. `status.fw_build` is the running build |
+| `POST /api/chips` `{"remember":true}` / `{"forget":true}` | `chips remember` / `chips forget` | remember which chip (by `par_t1`) is in each slot, after the wiring has been checked; from then on swapped chip-select wires are reported in `problems`. `status.chips` is `{"remembered": bool, "saved": unix|null}`, each sensor has `expected_par_t1` |
 | `POST /api/rescan` | `rescan` | re-probe all eight sensors and restart scanning |
 | `GET /api/files` | `files` | list recordings: `[{"name":"s0007_0000.bmerawdata","size":123456}]` |
 | `GET /api/files/<name>` | — | download one file |

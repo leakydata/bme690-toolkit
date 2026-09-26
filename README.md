@@ -18,6 +18,7 @@ undocumented. This repository fills those gaps.
 | **[BME Studio](studio/)** | Browser app, an open alternative to BME AI-Studio: import, explore, label and train, with honest test scores and live predictions over USB. [Open it](https://leakydata.github.io/bme690-toolkit/studio/) |
 | **[Python lab](python/LAB.md)** | `bme690.lab` for researchers with a GPU: pandas data loading, honest cross-validation, deep models across all sensors and over time, self-supervised pre-training, models back to BME Studio. Notebooks included |
 | **[`.bmerawdata` format spec](docs/bmerawdata-format.md)** | The undocumented format AI-Studio imports, reverse-engineered and verified |
+| **[Wiring guide](docs/wiring.md)** | Shuttle board and microSD to an ESP32-S3 DevKitC-1: diagram, pin tables with header positions, and the wiring check |
 | **[Hardware notes](docs/hardware-notes.md)** | AB3.1 + shuttle pinout, flash layout, and the traps that cost days |
 | **[AI-Studio on Linux](scripts/rebuild-aistudio-linux.sh)** | Turns Bosch's Windows release into a native Linux install |
 | **[ESP32-S3 firmware](firmware/bme690-logger-idf/)** | Runs the shuttle from a cheap ESP32-S3 with no Application Board: records AI-Studio files to SD, WiFi dashboard, plain-English wiring diagnosis |

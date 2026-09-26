@@ -249,6 +249,21 @@ static esp_err_t h_burnin(httpd_req_t *req)
 	return reply_status_or_error(req, rc, err);
 }
 
+static esp_err_t h_chips(httpd_req_t *req)
+{
+	cJSON *body = read_body(req);
+	char err[260] = "Send {\"remember\": true} or {\"forget\": true}.";
+	int rc = -1;
+
+	if (body && cJSON_IsTrue(cJSON_GetObjectItem(body, "remember"))) {
+		rc = app_chips(true, err, sizeof(err));
+	} else if (body && cJSON_IsTrue(cJSON_GetObjectItem(body, "forget"))) {
+		rc = app_chips(false, err, sizeof(err));
+	}
+	cJSON_Delete(body);
+	return reply_status_or_error(req, rc, err);
+}
+
 static esp_err_t h_time(httpd_req_t *req)
 {
 	cJSON *body = read_body(req);
@@ -534,6 +549,7 @@ static void start_http(void)
 		{ .uri = "/api/label", .method = HTTP_POST, .handler = h_label },
 		{ .uri = "/api/time", .method = HTTP_POST, .handler = h_time },
 		{ .uri = "/api/burnin", .method = HTTP_POST, .handler = h_burnin },
+		{ .uri = "/api/chips", .method = HTTP_POST, .handler = h_chips },
 		{ .uri = "/api/ota", .method = HTTP_POST, .handler = ota_handler },
 		{ .uri = "/api/rescan", .method = HTTP_POST, .handler = h_rescan },
 		{ .uri = "/api/files", .method = HTTP_GET, .handler = h_files },

@@ -29,7 +29,9 @@ static const char help[] =
 	"  config             the heater configuration in use\n"
 	"  rescan             re-check all eight sensors\n"
 	"  burnin <hours>     stabilise new sensors (Bosch HP-001), recording\n"
-	"  burnin stop        end a burn-in early\n";
+	"  burnin stop        end a burn-in early\n"
+	"  chips remember     remember which chip is in each slot (after checking the wiring)\n"
+	"  chips forget       stop checking chips against the remembered ones\n";
 
 static void print_json(char prefix, cJSON *obj)
 {
@@ -99,6 +101,9 @@ static void run(char *line)
 		bool stop = strcmp(arg, "stop") == 0;
 
 		reply(app_burnin(!stop, stop ? 0 : strtof(arg, NULL), err, sizeof(err)), err);
+	} else if (strcmp(cmd, "chips") == 0 && arg &&
+		   (strcmp(arg, "remember") == 0 || strcmp(arg, "forget") == 0)) {
+		reply(app_chips(strcmp(arg, "remember") == 0, err, sizeof(err)), err);
 	} else if (strcmp(cmd, "time") == 0 && arg) {
 		reply(app_set_time(atoll(arg)), "expected seconds since 1970");
 	} else {

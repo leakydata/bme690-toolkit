@@ -11,6 +11,7 @@
  * SPDX-License-Identifier: MIT */
 #include "app.h"
 #include "board.h"
+#include "chips.h"
 #include "net.h"
 #include "ota.h"
 #include "storage.h"
@@ -408,6 +409,24 @@ int app_burnin(bool on, float hours, char *err, size_t errlen)
 	return 0;
 }
 
+int app_chips(bool remember, char *err, size_t errlen)
+{
+	struct sensor_info info[NUM_SENSORS];
+	int rc;
+
+	if (!remember) {
+		rc = chips_forget();
+		if (rc) snprintf(err, errlen, "Could not clear the board's settings memory.");
+	} else {
+		for (int i = 0; i < NUM_SENSORS; i++) {
+			sensors_get(i, &info[i]);
+		}
+		rc = chips_remember(info, err, errlen);
+	}
+	app_notify();
+	return rc;
+}
+
 void app_rescan(void)
 {
 	sensors_request_rescan();
@@ -499,6 +518,56 @@ static float median(float *v, int n)
 		}
 	}
 	return n ? v[n / 2] : NAN;
+}
+
+/* Compare every answering sensor with the chip remembered for its slot. */
+static int slot_of_chip(uint16_t par_t1)
+{
+	for (int j = 0; j < NUM_SENSORS; j++) {
+		if (chips_expected(j) == par_t1) {
+			return j;
+		}
+	}
+	return -1;
+}
+
+static void diagnose_chips(struct problems *p, const struct sensor_info *info)
+{
+	if (!chips_known()) {
+		return;
+	}
+	for (int i = 0; i < NUM_SENSORS; i++) {
+		uint16_t got = info[i].par_t1, want = chips_expected(i);
+		int j;
+
+		if (info[i].state == SENSOR_INACTIVE || info[i].probe != PROBE_OK || !got || !want ||
+		    got == want) {
+			continue;
+		}
+		j = slot_of_chip(got);
+		if (j < 0) {
+			add_problem(p, LEVEL_WARN, i,
+				    "Sensor %d (%s) is a chip the board doesn't recognise. If you fitted a "
+				    "different shuttle board, check its wiring and press \"Remember these "
+				    "chips\" again.", i, sensor_slots[i].part);
+		} else if (info[j].probe == PROBE_OK && info[j].par_t1 == want) {
+			if (i < j) {
+				add_problem(p, LEVEL_WARN, i,
+					    "The wires for %s and %s are swapped: sensor %d is reading %s's chip "
+					    "and sensor %d is reading %s's. Put shuttle %s on GPIO%d and %s on "
+					    "GPIO%d.", sensor_slots[i].part, sensor_slots[j].part,
+					    i, sensor_slots[j].part, j, sensor_slots[i].part,
+					    sensor_slots[i].shuttle_pin, sensor_slots[i].cs,
+					    sensor_slots[j].shuttle_pin, sensor_slots[j].cs);
+			}
+		} else {
+			add_problem(p, LEVEL_WARN, i,
+				    "Sensor %d (%s) is reading %s's chip: the wire from shuttle %s is on "
+				    "GPIO%d but belongs on GPIO%d.", i, sensor_slots[i].part,
+				    sensor_slots[j].part, sensor_slots[j].shuttle_pin,
+				    sensor_slots[i].cs, sensor_slots[j].cs);
+		}
+	}
 }
 
 static void diagnose(struct problems *p, const struct sensor_info *info,
@@ -644,6 +713,7 @@ static void diagnose(struct problems *p, const struct sensor_info *info,
 			    "watching the drift, not for training.",
 			    (long long)(left / 60), (long long)(left % 60));
 	}
+	diagnose_chips(p, info);
 	if (config_error[0]) {
 		add_problem(p, LEVEL_ERROR, -1, "%s", config_error);
 	}
@@ -748,6 +818,14 @@ cJSON *app_status_json(void)
 		cJSON_AddNullToObject(o, "error");
 	}
 
+	o = cJSON_AddObjectToObject(root, "chips");
+	cJSON_AddBoolToObject(o, "remembered", chips_known());
+	if (chips_saved_at()) {
+		cJSON_AddNumberToObject(o, "saved", (double)chips_saved_at());
+	} else {
+		cJSON_AddNullToObject(o, "saved");
+	}
+
 	o = cJSON_AddObjectToObject(root, "config");
 	cJSON_AddStringToObject(o, "source", cfg->source);
 	cJSON_AddStringToObject(o, "name", cfg->name);
@@ -779,6 +857,7 @@ cJSON *app_status_json(void)
 		cJSON_AddStringToObject(so, "probe", probe_names[s->probe]);
 		cJSON_AddNumberToObject(so, "chip_id", s->chip_id);
 		cJSON_AddNumberToObject(so, "par_t1", s->par_t1);
+		cJSON_AddNumberToObject(so, "expected_par_t1", chips_expected(i));
 		cJSON_AddStringToObject(so, "heater_profile", hp->id);
 		cJSON_AddNumberToObject(so, "cycle_ms", config_cycle_ms(hp));
 		cJSON_AddNumberToObject(so, "cycles", s->cycles);
@@ -863,6 +942,7 @@ void app_start(const char *cfg_err)
 
 	lock = xSemaphoreCreateMutex();
 	queue = xQueueCreate(QUEUE_LEN, sizeof(struct reading));
+	chips_load();
 	snprintf(config_error, sizeof(config_error), "%s", cfg_err ? cfg_err : "");
 	ensure_label(cur_tag);
 

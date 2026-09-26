@@ -129,6 +129,13 @@ a{color:var(--acc)}
 <div id="rescanc"></div>
 </div>
 <div class="card">
+<h2>Wiring check</h2>
+<p id="chipinfo" class="sm mut">–</p>
+<div class="row"><button id="chipsave" class="btn">Remember these chips</button><button id="chipforget" class="btn" hidden>Forget</button></div>
+<p class="note">Every sensor chip has its own factory calibration, which works like a serial number. Once you have checked every wire,
+press Remember: from then on the board spots swapped chip-select wires and tells you which two to exchange.</p>
+</div>
+<div class="card">
 <h2>Wiring reference</h2>
 <p class="note" style="margin:0 0 8px">Rows in red belong to sensors that are not working. If <b>every</b> sensor fails, check the shared wires first: power, ground, SCK, SDO and SDI.</p>
 <div class="tbl"><table><thead><tr><th>Shuttle pin</th><th>Signal</th><th>ESP32-S3</th></tr></thead><tbody id="wire"></tbody></table></div>
@@ -366,7 +373,11 @@ const stepCol=i=>'hsl('+(215-i*21)+',70%,50%)';
 const ST={ok:['Working','p-ok'],missing:['Not found','p-err'],lost:['Lost contact','p-err'],suspect:['Odd readings','p-warn'],sleeping:['Resting','p-ok'],inactive:['Switched off','p-mut'],unknown:['No data yet','p-mut']};
 const WHY={missing:'Has never answered. Usually its CS wire is loose or on the wrong pin.',lost:'Answered at first, then stopped. Look for a loose wire or a bad contact.',suspect:'Answers, but its readings look impossible. Could be a noisy wire or a damaged sensor.',unknown:'No reading yet.'};
 function renderFw(){const e=$('#fwinfo');if(e)e.textContent=S?'This board runs version '+(S.fw||'?')+(S.fw_build?' (build '+S.fw_build+')':'')+'.':'–'}
-function renderStatus(){renderFw();
+function renderChips(){const e=$('#chipinfo');if(!e)return;const c=S&&S.chips;
+if(!c){e.textContent='–';return}
+if(c.remembered){e.textContent='Checking each sensor against the chip it had when you confirmed the wiring'+(c.saved?' ('+new Date(c.saved*1000).toLocaleDateString()+')':'')+'.';$('#chipsave').textContent='Remember again';$('#chipforget').hidden=false}
+else{e.textContent='Not set. The board cannot yet tell swapped wires from correct ones.';$('#chipsave').textContent='Remember these chips';$('#chipforget').hidden=true}}
+function renderStatus(){renderFw();renderChips();
 const ss=sensors(),probs=(S&&Array.isArray(S.problems)?S.problems:[]).filter(p=>p&&p.text);
 $('#board').textContent=S?[S.board,S.fw&&'firmware '+S.fw,S.config&&S.config.name].filter(Boolean).join(' · '):'';
 const act=ss.filter(s=>s.state!='inactive').length,nok=ss.filter(s=>s.state=='ok'||s.state=='sleeping').length,serious=probs.filter(p=>p.level!='info'),rec=!!(S&&S.recording),card=S&&S.card;
@@ -528,6 +539,8 @@ else if(Date.now()-t0>30000&&n.fw_build===old){clearInterval(wait);onStatus(n);s
 if(Date.now()-t0>120000){clearInterval(wait);show('The board has not come back yet. If its WiFi network is gone, reconnect to it; if it stays away, press RST on the board.',1)}},3000)};
 x.onerror=x.ontimeout=()=>show('The upload was interrupted. The board is unchanged; move closer and try again.',1);
 x.send(f)}
+$('#chipsave').onclick=()=>confirmUI($('#chipsave').parentNode,'Only do this after checking every wire against the wiring table: the board will treat the chip now in each slot as the right one.','Remember',()=>post('/api/chips',{remember:true},'Chips remembered').catch(()=>{}));
+$('#chipforget').onclick=()=>confirmUI($('#chipforget').parentNode,'Stop checking sensors against the remembered chips?','Forget',()=>post('/api/chips',{forget:true},'Chip check turned off').catch(()=>{}));
 $('#rescan').onclick=()=>confirmUI($('#rescan').parentNode,'Re-checking probes all eight sensors again and restarts their heater cycles. Measurements pause for a few seconds and the graphs will show a short gap.','Re-check now',async()=>{
 try{await post('/api/rescan',null,'Re-checking sensors…');cyc.forEach(c=>{c.cur=[];c.ls=-1});loadCfg()}catch(e){}});
 $('#recbtn').onclick=async()=>{const on=!(S&&S.recording);$('#recbtn').disabled=true;try{await post('/api/record',{on},on?'Recording started':'Recording stopped')}catch(e){}renderRec();if(V.tab=='files')loadFiles()};
@@ -563,7 +576,7 @@ const card={present:true,total_mb:14893,free_mb:13859,error:null};
 const sen=WIRE.map((w,i)=>({index:i,part:w[0],shuttle_pin:w[1],gpio:w[2],state:i==6?'missing':'ok',chip_id:i==6?0:97,par_t1:i==6?0:22400+i*53,heater_profile:'heater_354',cycle_ms:10780,cycles:i==6?0:330,heat_stable_pct:i==6?0:99.2+i*.08,last:null}));
 const cl=o=>JSON.parse(JSON.stringify(o)),fname=()=>'s'+String(sess).padStart(4,'0')+'_'+String(chunk).padStart(4,'0');
 const status=()=>({fw:'2.1.0',fw_build:'mock',board:'BME690-3F2A',uptime_ms:up(),time_set:tset,unix:Math.floor(tset?Date.now()/1000+toff:up()/1000),recording:rec,session:'s'+String(sess).padStart(4,'0'),file:rec?fname()+'.bmerawdata':null,rows_written:rows,
-label:{tag,name:(labels.find(l=>l.tag==tag)||{}).name||''},labels:cl(labels),card:Object.assign({},card),config:mcfg,burnin:mbi,wifi:{ssid:'BME690-3F2A',clients:1},
+label:{tag,name:(labels.find(l=>l.tag==tag)||{}).name||''},labels:cl(labels),card:Object.assign({},card),config:mcfg,burnin:mbi,chips:mchips,wifi:{ssid:'BME690-3F2A',clients:1},
 sensors:cl(sen),problems:[{level:'error',sensor:6,text:'Sensor 6 (U7) is not answering. Check the wire from shuttle P2-7 to GPIO15.'}].concat(tset?[]:[{level:'info',sensor:null,text:'The board clock is not set yet. This page sets it automatically.'}])});
 const send=o=>{if(sock&&sock.readyState==1)sock.onmessage({data:JSON.stringify(o)})};
 const push=()=>send(Object.assign({t:'status'},status()));
@@ -575,7 +588,7 @@ s.last={ms:d.ms,temp:d.temp,press:d.press,hum:d.hum,gas:d.gas,step,stable:d.stab
 send(Object.assign({t:'d'},d));if(rec){rows++;const f=files.find(x=>x.name==fname()+'.bmerawdata');if(f)f.size+=96}});
 step=(step+1)%10;setTimeout(tick,HP354[step][1]*140)}
 setTimeout(tick,300);setInterval(push,2000);
-let mcfg={source:'default',name:'HP-354 continuous'},mbi=null;
+let mcfg={source:'default',name:'HP-354 continuous'},mbi=null,mchips={remembered:false,saved:null};
 function h(m,p,b){b=b||{};
 if(p=='/api/config'&&m=='PUT'){mcfg={source:b.name,name:b.name};return status()}
 if(p=='/api/config'&&m=='DELETE'){mcfg={source:'default',name:'HP-354 continuous'};return status()}
@@ -584,7 +597,8 @@ if(p=='/api/config')return{configHeader:{dateCreated:new Date(boot).toISOString(
 if(p=='/api/files')return files.map(f=>Object.assign({},f));
 if(p.startsWith('/api/files/')&&m=='DELETE'){const n=decodeURIComponent(p.slice(11)),k=files.findIndex(f=>f.name==n);if(k<0)throw new Error('no such file');files.splice(k,1);return{ok:true}}
 if(m!='POST')throw new Error('not found');
-if(p=='/api/burnin'){mbi=b.on?{hours:b.hours,remaining_s:b.hours*3600}:null}
+if(p=='/api/chips'){mchips=b.remember?{remembered:true,saved:Math.floor(Date.now()/1000)}:{remembered:false,saved:null}}
+else if(p=='/api/burnin'){mbi=b.on?{hours:b.hours,remaining_s:b.hours*3600}:null}
 else if(p=='/api/time'){tset=true;toff=b.unix-Date.now()/1000}
 else if(p=='/api/record'){if(b.on&&!rec){sess++;chunk=0;rows=0;files.push({name:fname()+'.bmerawdata',size:1450},{name:fname()+'.bmelabelinfo',size:150})}rec=!!b.on}
 else if(p=='/api/label'){if(b.next){tag++;if(!labels.find(l=>l.tag==tag))labels.push({tag,name:'',desc:''})}else{if(!(b.tag>=0))throw new Error('bad tag');tag=b.tag;const l=labels.find(x=>x.tag==tag);if(l){l.name=b.name||'';l.desc=b.desc||''}else labels.push({tag,name:b.name||'',desc:b.desc||''});labels.sort((a,c)=>a.tag-c.tag)}}
