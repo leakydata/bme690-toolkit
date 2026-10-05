@@ -401,12 +401,13 @@ html($('#tiles'),ss.map((s,i)=>{const st=ST[s.state]||ST.unknown,l=s.last,bad=s.
 return'<button class="tile'+(bad?' bad':s.state=='suspect'?' sus':'')+'" data-s="'+i+'" style="--c:'+PAL[i]+'"><div class="t"><b>'+esc(s.part)+'</b><span class="pill '+st[1]+'">'+st[0]+'</span></div><div class="mut sm">sensor '+i+' · CS '+esc(s.shuttle_pin)+' → GPIO'+esc(s.gpio)+'</div>'+
 (l&&!bad?'<div class="v"><span>'+f1(l.temp,' °C')+'</span><span>'+f1(l.hum,' %')+'</span><span>'+f1(l.press,' hPa')+'</span><span>'+ohm(l.gas)+'</span></div><p class="mut">Heater stable '+(num(s.heat_stable_pct)!=null?Math.round(s.heat_stable_pct)+' %':'–')+'</p>':'<p>'+esc(WHY[s.state]||'')+'</p>')+'</button>'}).join(''));
 const badS=new Set(ss.filter(s=>!['ok','unknown','sleeping','inactive'].includes(s.state)).map(s=>s.index)),allBad=badS.size==N;
-const sh=[['P1-1','VDD (power)','3V3'],['P1-2','VDDIO (logic power)','3V3'],['P1-3','GND (ground)','GND'],['P2-2','SCK (clock)','GPIO12'],['P2-3','SDO (data from sensors)','GPIO13'],['P2-4','SDI (data to sensors)','GPIO11']];
+const hw=(S&&S.hw)||{sck:12,sdo:13,sdi:11,sd:{cs:10,sck:18,mosi:17,miso:8}},sdp=hw.sd||{};
+const sh=[['P1-1','VDD (power)','3V3'],['P1-2','VDDIO (logic power)','3V3'],['P1-3','GND (ground)','GND'],['P2-2','SCK (clock)','GPIO'+hw.sck],['P2-3','SDO (data from sensors)','GPIO'+hw.sdo],['P2-4','SDI (data to sensors)','GPIO'+hw.sdi]];
 html($('#wire'),sh.map(r=>'<tr'+(allBad?' class="hl"':'')+'><td>'+r.join('</td><td>')+'</td></tr>').join('')+
 ss.map((s,i)=>'<tr'+(badS.has(i)?' class="hl"':'')+'><td>'+esc(s.shuttle_pin)+'</td><td>CS for '+esc(s.part)+' (sensor '+i+')'+(badS.has(i)?' <b>: check this wire</b>':'')+'</td><td>GPIO'+esc(s.gpio)+'</td></tr>').join('')+
 '<tr class="nc"><td>P2-1</td><td>not used</td><td>leave unconnected</td></tr><tr class="nc"><td>P2-9</td><td>ID chip (not needed)</td><td>leave unconnected</td></tr>');
 const sdBad=card&&(card.present===false||card.error);
-html($('#sdw'),[['CS','GPIO10'],['SCK / CLK','GPIO18'],['MOSI / DI / CMD','GPIO17'],['MISO / DO / DAT0','GPIO8'],['VCC','3V3'],['GND','GND']].map(r=>'<tr'+(sdBad&&r[1].startsWith('G')&&r[1]!='GND'?' class="hl"':'')+'><td>'+r.join('</td><td>')+'</td></tr>').join(''));
+html($('#sdw'),[['CS','GPIO'+sdp.cs],['SCK / CLK','GPIO'+sdp.sck+(sdp.shared?' (shared with the sensors)':'')],['MOSI / DI / CMD','GPIO'+sdp.mosi+(sdp.shared?' (shared)':'')],['MISO / DO / DAT0','GPIO'+sdp.miso+(sdp.shared?' (shared)':'')],['VCC','3V3'],['GND','GND']].map(r=>'<tr'+(sdBad&&r[1].startsWith('G')&&r[1]!='GND'?' class="hl"':'')+'><td>'+r.join('</td><td>')+'</td></tr>').join(''));
 renderRec();if(V.tab=='sensor')renderSensor();renderPick()}
 
 function renderPick(){

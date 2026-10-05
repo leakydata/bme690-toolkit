@@ -1,0 +1,9 @@
+# Seeed XIAO ESP32-S3 / Sense on carrier Board B. Applied on top of
+# sdkconfig.defaults:
+#   idf.py -B build-xiao -D SDKCONFIG=build-xiao/sdkconfig -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.xiao" build
+CONFIG_BME690_BOARD_XIAO=y
+
+# The XIAO has no USB-UART chip, and its UART0 pins (GPIO43/44, D6/D7) are
+# sensor chip selects on Board B: console on the native USB port only.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+CONFIG_ESP_CONSOLE_SECONDARY_NONE=y

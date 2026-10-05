@@ -19,7 +19,9 @@ prefixed `S,`:
 
 ```json
 {
-  "fw": "2.0.0",
+  "fw": "2.4.0",
+  "hw": { "name": "ESP32-S3 DevKitC-1", "sck": 12, "sdo": 13, "sdi": 11,
+          "sd": { "cs": 10, "sck": 18, "mosi": 17, "miso": 8, "shared": false } },
   "board": "BME690-3F2A",
   "uptime_ms": 123456,
   "time_set": true,
@@ -49,6 +51,9 @@ prefixed `S,`:
 }
 ```
 
+- `hw` is the hardware the firmware was built for and its pins.
+  `sd.shared` is true on the XIAO (Board B), where the card shares the
+  sensor bus.
 - `state` is one of `ok`, `missing` (never answered), `lost` (answered, then
   stopped; it resumes by itself when the connection returns), `sleeping` (a
   duty-cycle rest between scans) or `inactive` (switched off in the board

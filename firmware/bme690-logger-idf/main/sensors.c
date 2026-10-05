@@ -375,22 +375,10 @@ static void sensor_task(void *arg)
 
 void sensors_start(const struct board_config *config, reading_sink s)
 {
-	spi_bus_config_t bus = {
-		.sclk_io_num = PIN_SCK,
-		.mosi_io_num = PIN_MOSI,
-		.miso_io_num = PIN_MISO,
-		.quadwp_io_num = -1,
-		.quadhd_io_num = -1,
-		.max_transfer_sz = 128,
-	};
-
 	cfg = *config;
 	sink = s;
 	lock = xSemaphoreCreateMutex();
-	ESP_ERROR_CHECK(spi_bus_initialize(SENSOR_SPI_HOST, &bus, SPI_DMA_CH_AUTO));
-	/* With SDO disconnected, MISO floats and reads random bytes; the
-	 * pull-up turns that into a clean 0xFF the diagnosis can name. */
-	gpio_pullup_en(PIN_MISO);
+	ESP_ERROR_CHECK(board_spi_bus_init());
 
 	xTaskCreate(sensor_task, "sensors", 6144, NULL, 5, NULL);
 }

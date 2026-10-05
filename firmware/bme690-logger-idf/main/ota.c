@@ -19,7 +19,12 @@
 #include "freertos/task.h"
 #include <string.h>
 
-#define PROJECT      "bme690_logger_idf"
+#define PROJECT      "bme690_logger_"   /* _idf (DevKitC) or _xiao (Board B) */
+#if CONFIG_BME690_BOARD_XIAO
+#define APP_FILE     "bme690-logger-xiao-app.bin"
+#else
+#define APP_FILE     "bme690-logger-app.bin"
+#endif
 #define CHUNK        4096
 #define CONFIRM_MS   45000   /* a start this long without trouble counts as good */
 
@@ -66,14 +71,20 @@ static const char *check_image(const char *buf, int len)
 	size_t off = sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t);
 
 	if (len < (int)(off + sizeof(esp_app_desc_t)) || h->magic != ESP_IMAGE_HEADER_MAGIC) {
-		return "That is not an ESP32 firmware file. Download bme690-logger-app.bin from the project's site.";
+		return "That is not an ESP32 firmware file. Download " APP_FILE " from the project's site.";
 	}
 	if (h->chip_id != ESP_CHIP_ID_ESP32S3) {
 		return "That firmware is for a different kind of ESP32, not this ESP32-S3.";
 	}
 	d = (const esp_app_desc_t *)(buf + off);
-	if (d->magic_word != ESP_APP_DESC_MAGIC_WORD || strncmp(d->project_name, PROJECT, sizeof(d->project_name)) != 0) {
-		return "That firmware is not the BME690 logger. Download bme690-logger-app.bin from the project's site.";
+	if (d->magic_word != ESP_APP_DESC_MAGIC_WORD || strncmp(d->project_name, PROJECT, strlen(PROJECT)) != 0) {
+		return "That firmware is not the BME690 logger. Download " APP_FILE " from the project's site.";
+	}
+	/* bme690_logger_idf (DevKitC) or bme690_logger_xiao (Board B): pins
+	 * differ, so only an image built for this board is accepted. */
+	if (strncmp(d->project_name, esp_app_get_description()->project_name, sizeof(d->project_name)) != 0) {
+		return "That firmware is for a different board. This board is a " BOARD_NAME
+		       ": download " APP_FILE " from the project's site.";
 	}
 	return NULL;
 }

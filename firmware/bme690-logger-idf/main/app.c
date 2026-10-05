@@ -506,7 +506,7 @@ static void add_problem(struct problems *p, enum level lv, int sensor, const cha
 #define SLOT(i) (i), sensor_slots[i].part, sensor_slots[i].shuttle_pin, sensor_slots[i].cs
 #define SHARED_WIRES \
 	"power (3V3 to P1-1 and P1-2, GND to P1-3) and the three shared SPI wires " \
-	"(P2-2 SCK to GPIO12, P2-3 SDO to GPIO13, P2-4 SDI to GPIO11)"
+	"(P2-2 SCK to " WIRE_SCK ", P2-3 SDO to " WIRE_SDO ", P2-4 SDI to " WIRE_SDI ")"
 
 static float median(float *v, int n)
 {
@@ -602,7 +602,7 @@ static void diagnose(struct problems *p, const struct sensor_info *info,
 	} else if (active > 1 && stuck == active) {
 		add_problem(p, LEVEL_ERROR, -1,
 			    "Every sensor reads back zeros: the data line from the sensors "
-			    "(P2-3 SDO to GPIO13) is being held low. Check that wire is not "
+			    "(P2-3 SDO to " WIRE_SDO ") is being held low. Check that wire is not "
 			    "touching GND, and that the shuttle has 3V3 on P1-1 and P1-2.");
 	}
 
@@ -786,6 +786,20 @@ cJSON *app_status_json(void)
 	storage_get_status(&st);
 
 	cJSON_AddStringToObject(root, "fw", FW_VERSION);
+	{
+		cJSON *hw = cJSON_AddObjectToObject(root, "hw");
+		cJSON *sd = cJSON_AddObjectToObject(hw, "sd");
+
+		cJSON_AddStringToObject(hw, "name", BOARD_NAME);
+		cJSON_AddNumberToObject(hw, "sck", PIN_SCK);
+		cJSON_AddNumberToObject(hw, "sdo", PIN_MISO);
+		cJSON_AddNumberToObject(hw, "sdi", PIN_MOSI);
+		cJSON_AddNumberToObject(sd, "cs", PIN_SD_CS);
+		cJSON_AddNumberToObject(sd, "sck", PIN_SD_SCK);
+		cJSON_AddNumberToObject(sd, "mosi", PIN_SD_MOSI);
+		cJSON_AddNumberToObject(sd, "miso", PIN_SD_MISO);
+		cJSON_AddBoolToObject(sd, "shared", SD_SHARES_SENSOR_BUS);
+	}
 	cJSON_AddStringToObject(root, "fw_build", ota_build());
 	cJSON_AddStringToObject(root, "board", net_board_name());
 	cJSON_AddNumberToObject(root, "uptime_ms", (double)(esp_timer_get_time() / 1000));

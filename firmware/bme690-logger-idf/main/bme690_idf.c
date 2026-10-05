@@ -7,6 +7,23 @@
 
 #define MAX_XFER 64   /* longest burst the core asks for is 51 bytes */
 
+/* One transfer with this sensor's CS held low. The bus is held for the
+ * whole time, so an SD card sharing it (XIAO Sense) can never clock while
+ * a sensor is selected. */
+static esp_err_t xfer(struct bme690_idf_ctx *ctx, spi_transaction_t *t)
+{
+	esp_err_t err = spi_device_acquire_bus(ctx->spi, portMAX_DELAY);
+
+	if (err != ESP_OK) {
+		return err;
+	}
+	gpio_set_level(ctx->cs, 0);
+	err = spi_device_polling_transmit(ctx->spi, t);
+	gpio_set_level(ctx->cs, 1);
+	spi_device_release_bus(ctx->spi);
+	return err;
+}
+
 static int idf_read(void *vctx, uint8_t reg, uint8_t *buf, size_t len)
 {
 	struct bme690_idf_ctx *ctx = vctx;
@@ -24,9 +41,7 @@ static int idf_read(void *vctx, uint8_t reg, uint8_t *buf, size_t len)
 	t.tx_buffer = tx;
 	t.rx_buffer = rx;
 
-	gpio_set_level(ctx->cs, 0);
-	err = spi_device_polling_transmit(ctx->spi, &t);
-	gpio_set_level(ctx->cs, 1);
+	err = xfer(ctx, &t);
 	if (err != ESP_OK) {
 		return -1;
 	}
@@ -49,9 +64,7 @@ static int idf_write(void *vctx, uint8_t reg, const uint8_t *buf, size_t len)
 	t.length = (len + 1) * 8;
 	t.tx_buffer = tx;
 
-	gpio_set_level(ctx->cs, 0);
-	err = spi_device_polling_transmit(ctx->spi, &t);
-	gpio_set_level(ctx->cs, 1);
+	err = xfer(ctx, &t);
 	return (err == ESP_OK) ? 0 : -1;
 }
 

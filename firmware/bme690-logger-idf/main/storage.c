@@ -192,6 +192,16 @@ int storage_mount(void)
 	if (st.present) {
 		return 0;
 	}
+#if SD_SHARES_SENSOR_BUS
+	if (!bus_up) {
+		if (board_spi_bus_init() != 0) {
+			set_error("The SD card bus would not start.");
+			return -1;
+		}
+		gpio_pullup_en(PIN_SD_CS);
+		bus_up = true;
+	}
+#else
 	if (!bus_up) {
 		spi_bus_config_t bus = {
 			.sclk_io_num = PIN_SD_SCK,
@@ -211,6 +221,7 @@ int storage_mount(void)
 		gpio_pullup_en(PIN_SD_CS);
 		bus_up = true;
 	}
+#endif
 
 	host.slot = SD_SPI_HOST;
 	host.max_freq_khz = 10000;
@@ -225,8 +236,7 @@ int storage_mount(void)
 	}
 	if (e != ESP_OK) {
 		set_error("No SD card found. Insert one (FAT32) and press RST, or "
-			  "check the card wiring: CS GPIO10, SCK GPIO18, MOSI GPIO17, "
-			  "MISO GPIO8, and power.");
+			  "check " SD_WIRING ".");
 		return -1;
 	}
 

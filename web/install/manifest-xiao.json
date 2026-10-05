@@ -1,0 +1,11 @@
+{
+  "name": "BME690 8x shuttle logger (XIAO ESP32-S3, Board B)",
+  "version": "dev",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [{ "path": "bme690-logger-xiao.bin", "offset": 0 }]
+    }
+  ]
+}

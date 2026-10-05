@@ -1,0 +1,17 @@
+menu "BME690 logger"
+
+    choice BME690_BOARD
+        prompt "Hardware"
+        default BME690_BOARD_DEVKITC
+        help
+            Which ESP32-S3 board the shuttle is connected to. Sets the pin
+            map, the console port and the status LED.
+
+        config BME690_BOARD_DEVKITC
+            bool "ESP32-S3 DevKitC-1 with jumper wires (docs/wiring.md)"
+
+        config BME690_BOARD_XIAO
+            bool "Seeed XIAO ESP32-S3 / Sense on carrier Board B (board_b/)"
+    endchoice
+
+endmenu

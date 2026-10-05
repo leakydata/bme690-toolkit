@@ -1,8 +1,9 @@
 # BME690 8x shuttle logger for the ESP32-S3
 
 This firmware runs Bosch's **BME690 8x shuttle board** (eight gas sensors) from
-an ordinary **ESP32-S3 DevKitC**. You don't need Bosch's Application Board,
-a PC or an app.
+an ordinary **ESP32-S3 DevKitC**, or from a **Seeed XIAO ESP32-S3** on the
+carrier board in [`board_b/`](../../board_b/README.md). You don't need
+Bosch's Application Board, a PC or an app.
 
 - **Power it on and it records.** All eight sensors scan and the data goes
   to a microSD card as ready-to-import BME AI-Studio files.
@@ -24,7 +25,30 @@ a PC or an app.
 | microSD card module + card | optional. Any SPI module works. Format the card as FAT32 |
 | jumper wires | keep them under 20 cm |
 
-## Wiring
+## XIAO ESP32-S3 on Board B
+
+[Board B](../../board_b/README.md) is a carrier that holds the shuttle on
+top and a XIAO ESP32-S3 (or Sense) underneath, so there's no wiring. Its
+firmware is a separate build of the same code, with a different pin map:
+
+| | DevKitC-1 | XIAO on Board B |
+|---|---|---|
+| SCK / SDO / SDI | GPIO12 / 13 / 11 | D8 / D9 / D10 (GPIO7 / 8 / 9) |
+| chip selects U1-U8 | GPIO1, 2, 4, 5, 6, 7, 15, 16 | D0-D7 (GPIO1-6, 43, 44) |
+| SD card | module on its own bus (below) | the XIAO Sense's slot, sharing the sensor bus, CS GPIO21 |
+| serial console | UART port (or USB) | the XIAO's USB-C |
+| status light | RGB LED, colours below | orange LED: long blink = recording, short blip = not recording, double blink = warning or problem. It stays off while a Sense card is mounted, because on the Sense the LED pin is the card's chip select |
+| install / update file | `bme690-logger-esp32s3.bin` / `bme690-logger-app.bin` | `bme690-logger-xiao.bin` / `bme690-logger-xiao-app.bin` |
+
+- **Installing:** the browser installer has a button for each board.
+- **WiFi updates:** a board's WiFi updater accepts only firmware made for
+  that board.
+- **Building it yourself:**
+  `idf.py -B build-xiao -DBME690_BOARD=xiao build`
+
+Everything else in this README applies to both.
+
+## Wiring (DevKitC)
 
 The full wiring guide, with a diagram and the DevKitC header pin for every wire, is
 [docs/wiring.md](../../docs/wiring.md).
@@ -89,6 +113,9 @@ cd firmware/bme690-logger-idf
 idf.py set-target esp32s3
 idf.py build
 idf.py -p /dev/ttyUSB0 flash monitor
+# XIAO ESP32-S3 on Board B:
+idf.py -B build-xiao -DBME690_BOARD=xiao build
+idf.py -B build-xiao -DBME690_BOARD=xiao -p /dev/ttyACM0 flash monitor
 ```
 
 The DevKitC has two USB-C ports. Plug into the one labelled **UART**. On Linux
@@ -238,5 +265,6 @@ recording lets you watch the drift settle.
 | `main/storage.c` | SD card, chunked `.bmerawdata` writing, power-loss repair |
 | `main/app.c` | labels, clock, recording, and the plain-English problem list |
 | `main/net.c` | WiFi access point, captive-portal DNS, HTTP API and WebSocket |
-| `main/ui.c` | BOOT button and RGB LED |
+| `main/ui.c` | BOOT button and status LED |
+| `main/board.h`, `main/board.c` | the pin map of each board, and the shared SPI bus start-up |
 | `main/config.c` | reads and writes AI-Studio's `.bmeconfig` |

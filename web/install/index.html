@@ -78,9 +78,14 @@ WiFi network. You don't need to install anything.</p>
   <div class="num">1</div>
   <div>
     <h2>Plug in the board</h2>
-    <p>Connect the ESP32-S3 DevKitC to this computer with a USB-C cable that carries data
-    (some cables only charge). The board has two USB-C ports; either works. The one
-    labelled <b>USB</b> needs no driver on any system.</p>
+    <p>Connect the board to this computer with a USB-C cable that carries data
+    (some cables only charge).</p>
+    <ul class="small">
+      <li><b>ESP32-S3 DevKitC-1</b> (shuttle on jumper wires): it has two USB-C ports and
+      either works. The one labelled <b>USB</b> needs no driver on any system.</li>
+      <li><b>XIAO ESP32-S3 or Sense on carrier Board B</b>: its one USB-C port. If the
+      port doesn't appear, hold the XIAO's <kbd>B</kbd> button while plugging it in.</li>
+    </ul>
     <p class="muted small">Wire the shuttle before or after installing, it doesn't matter.
     The wiring table is further down.</p>
   </div>
@@ -90,11 +95,22 @@ WiFi network. You don't need to install anything.</p>
   <div class="num">2</div>
   <div>
     <h2>Install</h2>
-    <p>Click the button, pick the board's port from the list, and confirm. It takes about a
-    minute. Choose <b>Erase</b> if you're asked; it removes whatever was on the board before.</p>
+    <p>Click the button for your board, pick its port from the list, and confirm. It takes
+    about a minute. Choose <b>Erase</b> if you're asked; it removes whatever was on the board
+    before. The two boards use different pins, so pick the right one.</p>
     <div class="install">
       <esp-web-install-button manifest="manifest.json">
-        <button slot="activate">Install BME690 Logger</button>
+        <button slot="activate">Install for ESP32-S3 DevKitC-1</button>
+        <div slot="unsupported" class="warn">This browser can't talk to USB devices. Open
+        this page in <b>Chrome</b> or <b>Edge</b> on a computer (Windows, macOS or Linux).
+        Phones, Firefox and Safari can't install firmware.</div>
+        <div slot="not-allowed" class="warn">Installing needs a secure page. Open it at its
+        <code>https://</code> address.</div>
+      </esp-web-install-button>
+    </div>
+    <div class="install">
+      <esp-web-install-button manifest="manifest-xiao.json">
+        <button slot="activate">Install for XIAO ESP32-S3 (Board B)</button>
         <div slot="unsupported" class="warn">This browser can't talk to USB devices. Open
         this page in <b>Chrome</b> or <b>Edge</b> on a computer (Windows, macOS or Linux).
         Phones, Firefox and Safari can't install firmware.</div>
@@ -110,7 +126,7 @@ WiFi network. You don't need to install anything.</p>
   <div class="num">3</div>
   <div>
     <h2>Open the dashboard</h2>
-    <p>After installing, press the board's <kbd>RST</kbd> button. On your phone or laptop,
+    <p>After installing, press the board's <kbd>RST</kbd> button (<kbd>R</kbd> on the XIAO). On your phone or laptop,
     join the WiFi network <b>BME690-XXXX</b> (no password). The dashboard opens by itself.
     If it doesn't, go to <b>http://192.168.4.1</b>.</p>
     <p>Its <b>Health</b> tab checks every sensor and tells you in plain English which wire to
@@ -123,7 +139,9 @@ WiFi network. You don't need to install anything.</p>
   <p class="small">Boards running version 2.1 or later can update without a cable. Download the firmware file while
   you're online, join the board's WiFi, and choose the file in the dashboard under <b>Files → Firmware</b>. If the new
   version doesn't start properly, the board returns to the old one by itself.</p>
-  <p><a class="btn" href="bme690-logger-app.bin" download style="text-decoration:none;display:inline-block">Download bme690-logger-app.bin</a></p>
+  <p><a class="btn" href="bme690-logger-app.bin" download style="text-decoration:none;display:inline-block">DevKitC-1: bme690-logger-app.bin</a>
+  <a class="btn" href="bme690-logger-xiao-app.bin" download style="text-decoration:none;display:inline-block">XIAO (Board B): bme690-logger-xiao-app.bin</a></p>
+  <p class="muted small">Each board accepts only the file made for it (from version 2.4).</p>
   <p class="muted small">Boards on an older version need one install with the button above first; it sets up the room
   for over-the-air updates.</p>
 </div>

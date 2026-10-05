@@ -1,17 +1,23 @@
-/* BOOT button and the DevKitC's RGB LED.
+/* BOOT button and the status LED.
  *
  * Button: a short press starts the next sample label; holding it for two
  * seconds starts or stops recording.
  *
- * LED, one pulse every two seconds:
+ * DevKitC RGB LED, one pulse every two seconds:
  *   green  recording, all fine        blue   running, not recording
  *   amber  running, with a warning    red    a problem needs attention
  * A white blink acknowledges a button press or a command.
+ *
+ * XIAO orange LED, every two seconds: a long blink while recording, a
+ * short blip while not, a double blink for a warning or a problem. It is
+ * off whenever an SD card is mounted, because on the Sense its pin is the
+ * card's chip select.
  *
  * SPDX-License-Identifier: MIT */
 #include "ui.h"
 #include "app.h"
 #include "board.h"
+#include "storage.h"
 #include "led_strip.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -26,6 +32,9 @@
 #define BRIGHT       24     /* of 255: visible, not blinding */
 
 static led_strip_handle_t leds[2];
+#if LED_SIMPLE
+static bool simple_led;
+#endif
 static volatile int64_t flash_until;
 
 void ui_flash(void)
@@ -35,6 +44,12 @@ void ui_flash(void)
 
 static void set_led(uint8_t r, uint8_t g, uint8_t b)
 {
+#if LED_SIMPLE
+	if (simple_led) {
+		gpio_set_level(PIN_LED, (r | g | b) ? LED_ON_LEVEL : !LED_ON_LEVEL);
+	}
+	return;
+#endif
 	for (int i = 0; i < 2; i++) {
 		if (leds[i]) {
 			led_strip_set_pixel(leds[i], 0, r, g, b);
@@ -45,6 +60,22 @@ static void set_led(uint8_t r, uint8_t g, uint8_t b)
 
 static void led_init(void)
 {
+#if LED_SIMPLE
+	struct storage_status st;
+
+	storage_get_status(&st);
+	if (LED_SHARES_SD_CS && st.present) {
+		return;   /* the pin is the card's chip select */
+	}
+	gpio_config_t io = {
+		.pin_bit_mask = 1ULL << PIN_LED,
+		.mode = GPIO_MODE_OUTPUT,
+	};
+	gpio_set_level(PIN_LED, !LED_ON_LEVEL);
+	if (gpio_config(&io) == ESP_OK) {
+		simple_led = true;
+	}
+#else
 	const gpio_num_t pins[2] = { PIN_LED_V10, PIN_LED_V11 };
 
 	for (int i = 0; i < 2; i++) {
@@ -63,6 +94,18 @@ static void led_init(void)
 			leds[i] = NULL;
 		}
 	}
+#endif
+}
+
+/* The one-colour LED's pattern within each two-second period. */
+static bool simple_pattern(int64_t now)
+{
+	int64_t t = now % PULSE_MS;
+
+	if (app_worst_level() >= LEVEL_WARN) {
+		return t < 120 || (t >= 300 && t < 420);
+	}
+	return t < (app_recording() ? PULSE_ON_MS : 40);
 }
 
 static void ui_task(void *arg)
@@ -94,6 +137,8 @@ static void ui_task(void *arg)
 
 		if (now < flash_until || (down && now - pressed_at >= LONG_MS)) {
 			r = g = b = BRIGHT;
+		} else if (LED_SIMPLE) {
+			r = simple_pattern(now) ? BRIGHT : 0;
 		} else if (now % PULSE_MS < PULSE_ON_MS) {
 			switch (app_worst_level()) {
 			case LEVEL_ERROR: r = BRIGHT; break;

@@ -8,8 +8,14 @@
 #include "console.h"
 #include "app.h"
 #include "storage.h"
+#include "sdkconfig.h"
+#if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+#include "driver/usb_serial_jtag.h"
+#include "driver/usb_serial_jtag_vfs.h"
+#else
 #include "driver/uart.h"
 #include "driver/uart_vfs.h"
+#endif
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <stdio.h>
@@ -125,10 +131,20 @@ static void console_task(void *arg)
 
 void console_start(void)
 {
+#if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+	/* The XIAO has no USB-UART chip: blocking reads on its native USB port.
+	 * (Its UART0 pins, GPIO43/44, are sensor chip selects on Board B.) */
+	usb_serial_jtag_driver_config_t usb = USB_SERIAL_JTAG_DRIVER_CONFIG_DEFAULT();
+
+	usb_serial_jtag_driver_install(&usb);
+	usb_serial_jtag_vfs_use_driver();
+	usb_serial_jtag_vfs_set_rx_line_endings(ESP_LINE_ENDINGS_CR);
+#else
 	/* Blocking, line-buffered reads on the UART console. */
 	uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM, 512, 0, 0, NULL, 0);
 	uart_vfs_dev_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
 	uart_vfs_dev_port_set_rx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CR);
+#endif
 	setvbuf(stdin, NULL, _IONBF, 0);
 	xTaskCreate(console_task, "console", 6144, NULL, 2, NULL);
 }
