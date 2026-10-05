@@ -45,7 +45,7 @@ struct sensor_slot {
 #define PIN_SD_SCK  PIN_SCK
 #define PIN_SD_MOSI PIN_MOSI
 #define PIN_SD_MISO PIN_MISO
-#define SD_WIRING   "the card slot on the XIAO ESP32-S3 Sense expansion board"
+#define SD_WIRING   "that the Sense's camera/SD board is fitted (a plain XIAO ESP32-S3 has no card slot; it runs live without one)"
 
 #define PIN_BUTTON  GPIO_NUM_0   /* the XIAO's B (BOOT) button */
 

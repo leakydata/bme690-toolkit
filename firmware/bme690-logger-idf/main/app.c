@@ -722,8 +722,12 @@ static void diagnose(struct problems *p, const struct sensor_info *info,
 		add_problem(p, LEVEL_ERROR, -1, "%s", config_error);
 	}
 	if (!st->present) {
-		add_problem(p, LEVEL_WARN, -1, "%s Readings still stream live to this "
-			    "dashboard and over USB.", st->error);
+		/* A plain XIAO ESP32-S3 has no card slot; running live is normal
+		 * there, so it is a note rather than a warning (and the LED stays
+		 * calm). */
+		add_problem(p, SD_SHARES_SENSOR_BUS ? LEVEL_INFO : LEVEL_WARN, -1,
+			    "%s Readings still stream live to this dashboard and over USB.",
+			    st->error);
 	} else if (st->error[0]) {
 		add_problem(p, LEVEL_ERROR, -1, "%s", st->error);
 	}

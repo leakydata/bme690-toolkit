@@ -118,6 +118,11 @@ same dashboard, AI-Studio files and features as the DevKitC version:
 
 What's different on the XIAO:
 
+- **A plain XIAO ESP32-S3 works too**, live only: the dashboard's live
+  graphs, **Record here** (recording into your browser), and USB streaming
+  to BME Studio or the `bme690` tool. With no card, the dashboard shows a
+  note (not a warning) and the LED blinks normally. Card recording needs
+  the Sense with its camera/SD board fitted.
 - The serial console is the XIAO's USB-C.
 - The orange LED blinks the status: long = recording, short = not
   recording, double = warning or problem. It stays off while a Sense card
