@@ -152,7 +152,7 @@ All files are in `fab/`:
 | material | FR-4 |
 | solder mask | green |
 | surface finish | **LeadFree HASL** |
-| order number | "Specify a location" (the `JLCJLCJLCJLC` text on the back) |
+| Mark on PCB | **Remove Mark** (free, and the default) |
 | quantity | 5 |
 
 **Assembly options:**
@@ -232,8 +232,8 @@ on the checkout page.
 
 1. Upload `board_a-gerbers.zip`. The viewer should show 29.3 x 26.2 mm,
    2 layers and 39 holes, with the labels readable on both sides.
-2. Set LeadFree HASL, green, 1.6 mm, and "Specify a location" for the
-   order number.
+2. Set LeadFree HASL, green, 1.6 mm, and leave "Mark on PCB" at
+   **Remove Mark**.
 3. Turn on PCB Assembly: Economic, Top side, then upload the BOM and CPL.
 4. On the parts page, check that all 8 parts matched (5 lines, all
    "Basic") and nothing is marked "shortage".

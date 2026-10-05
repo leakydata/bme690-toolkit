@@ -80,8 +80,6 @@ def build_pcb(route=True):
     b.text("SCL", -1.27, 8.0, rot=90)
     for i, line in enumerate(LEGEND):
         b.text(line, -2.2, 2.2 + i * 1.6, layer=pcbnew.B_SilkS, size=1.0)
-    # JLCPCB prints its order number here ("specify a location" option)
-    b.text("JLCJLCJLCJLC", -2.2, 20.9, layer=pcbnew.B_SilkS, size=1.0)
 
     b.save()
     if route:

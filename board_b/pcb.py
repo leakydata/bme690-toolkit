@@ -79,7 +79,6 @@ def build_pcb(route=True):
         b.text(line, -4.7, 2.6 + i * 1.8, layer=pcbnew.B_SilkS, size=1.0)
     b.text("IDD", 10.0, 5.6, layer=pcbnew.B_SilkS)
     b.text("USB", -4.7, -2.55, layer=pcbnew.B_SilkS)
-    b.text("JLCJLCJLCJLC", -4.7, 20.4, layer=pcbnew.B_SilkS, size=1.0)
 
     b.save()
     if route:
