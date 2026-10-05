@@ -1,0 +1,12 @@
+Designator,Value,Footprint,LCSC,MPN,Fitted by
+C1,100nF,C_0603_1608Metric,C14663,,JLCPCB
+C2,10uF,C_0603_1608Metric,C19702,,JLCPCB
+C3,100nF,C_0603_1608Metric,C14663,,JLCPCB
+C4,10uF,C_0603_1608Metric,C19702,,JLCPCB
+J1,Shuttle 3.0 sockets,Bosch_Shuttle_3.0_Sockets,,Sullins LPPB071NFFN-RC + LPPB091NFFN-RC,you (hand solder)
+J2,2x8 header,PinHeader_2x08_P2.54mm_Vertical,,2x8 male header 2.54 mm,you (hand solder)
+J3,IDD meter,PinHeader_1x02_P2.54mm_Vertical,,1x2 male header 2.54 mm,you (hand solder)
+R1,4.7k,R_0603_1608Metric,C23162,,JLCPCB
+R2,4.7k,R_0603_1608Metric,C23162,,JLCPCB
+R3,1k,R_0603_1608Metric,C21190,,JLCPCB
+R4,10k,R_0603_1608Metric,C25804,,JLCPCB

@@ -1,0 +1,2131 @@
+(kicad_sch (version 20250114) (generator "kigen") (generator_version "9.0") (uuid "67c044cd-7301-5c20-8033-76e0af84a550") (paper "A4")
+	(title_block (title "Board B - XIAO ESP32-S3 shuttle carrier") (date "2026-10-03") (rev "1") (comment 1 "Seeed XIAO ESP32-S3 / Sense carrier for a Bosch Shuttle Board 3.0") (comment 2 "github.com/leakydata/bme690-toolkit"))
+	(lib_symbols
+		(symbol "Shuttle3:Bosch_Shuttle_3.0"
+			(pin_names (offset 1.016))
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J" (at 0 13.97 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Value" "Bosch_Shuttle_3.0" (at 0 -13.97 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Footprint" "Shuttle3:Bosch_Shuttle_3.0_Sockets" (at 0 -16.51 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Datasheet" "https://www.bosch-sensortec.com/" (at 0 -19.05 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Description" "Bosch Sensortec Shuttle Board 3.0 socket pair (P1 7 pins, P2 9 pins, 1.27 mm). Pins 1-7 = P1, 11-19 = P2." (at 0 -21.59 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "MPN" "LPPB071NFFN-RC + LPPB091NFFN-RC" (at 0 -24.13 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_keywords" "Bosch shuttle BME690 BMA580 sensor socket" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(symbol "Bosch_Shuttle_3.0_0_1"
+				(rectangle (start -10.16 12.7) (end 10.16 -12.7)
+					(stroke (width 0.254) (type default))
+					(fill (type background))
+				)
+				(text "P1" (at -7.62 13.97 0)
+					(effects
+						(font (size 1.27 1.27))
+					)
+				)
+				(text "P2" (at 7.62 13.97 0)
+					(effects
+						(font (size 1.27 1.27))
+					)
+				)
+			)
+			(symbol "Bosch_Shuttle_3.0_1_1"
+				(pin power_in line (at -12.7 10.16 0) (length 2.54)
+					(name "VDD"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin power_in line (at -12.7 7.62 0) (length 2.54)
+					(name "VDDIO"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin power_in line (at -12.7 5.08 0) (length 2.54)
+					(name "GND"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "3"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 2.54 0) (length 2.54)
+					(name "GPIO0"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "4"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 0 0) (length 2.54)
+					(name "GPIO1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "5"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 -2.54 0) (length 2.54)
+					(name "GPIO2/INT1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "6"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 -5.08 0) (length 2.54)
+					(name "GPIO3/INT2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "7"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 10.16 180) (length 2.54)
+					(name "CS"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "11"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 7.62 180) (length 2.54)
+					(name "SCK/SCL"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "12"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 5.08 180) (length 2.54)
+					(name "SDO"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "13"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 2.54 180) (length 2.54)
+					(name "SDI/SDA"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "14"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 0 180) (length 2.54)
+					(name "GPIO4"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "15"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 -2.54 180) (length 2.54)
+					(name "GPIO5"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "16"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 -5.08 180) (length 2.54)
+					(name "GPIO6"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "17"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 -7.62 180) (length 2.54)
+					(name "GPIO7"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "18"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 -10.16 180) (length 2.54)
+					(name "PROM_RW"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "19"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Shuttle3:XIAO_ESP32S3"
+			(pin_names (offset 1.016))
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U" (at 0 11.43 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Value" "XIAO_ESP32S3" (at 0 -11.43 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Footprint" "Shuttle3:XIAO_ESP32S3_THT" (at 0 -13.97 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Datasheet" "https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/" (at 0 -16.51 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Description" "Seeed Studio XIAO ESP32-S3 or ESP32-S3 Sense on 2.54 mm headers" (at 0 -19.05 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(symbol "XIAO_ESP32S3_0_1"
+				(rectangle (start -10.16 10.16) (end 10.16 -10.16)
+					(stroke (width 0.254) (type default))
+					(fill (type background))
+				)
+			)
+			(symbol "XIAO_ESP32S3_1_1"
+				(pin bidirectional line (at -12.7 7.62 0) (length 2.54)
+					(name "D0/GPIO1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 5.08 0) (length 2.54)
+					(name "D1/GPIO2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 2.54 0) (length 2.54)
+					(name "D2/GPIO3"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "3"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 0 0) (length 2.54)
+					(name "D3/GPIO4"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "4"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 -2.54 0) (length 2.54)
+					(name "D4/SDA/GPIO5"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "5"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 -5.08 0) (length 2.54)
+					(name "D5/SCL/GPIO6"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "6"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at -12.7 -7.62 0) (length 2.54)
+					(name "D6/TX/GPIO43"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "7"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 -7.62 180) (length 2.54)
+					(name "D7/RX/GPIO44"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "8"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 -5.08 180) (length 2.54)
+					(name "D8/SCK/GPIO7"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "9"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 -2.54 180) (length 2.54)
+					(name "D9/MISO/GPIO8"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "10"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin bidirectional line (at 12.7 0 180) (length 2.54)
+					(name "D10/MOSI/GPIO9"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "11"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin power_out line (at 12.7 2.54 180) (length 2.54)
+					(name "3V3"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "12"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin power_in line (at 12.7 5.08 180) (length 2.54)
+					(name "GND"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "13"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin power_in line (at 12.7 7.62 180) (length 2.54)
+					(name "5V"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "14"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Jumper:SolderJumper_3_Bridged12"
+			(pin_names (offset 0) (hide yes))
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "JP" (at -2.54 -2.54 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Value" "SolderJumper_3_Bridged12" (at 0 2.794 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Footprint" "" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Datasheet" "" (at 0 -15.24 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Description" "3-pole Solder Jumper, pins 1+2 closed/bridged" (at 0 -12.7 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_keywords" "Solder Jumper SPDT" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_fp_filters" "SolderJumper*Bridged12*" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(symbol "SolderJumper_3_Bridged12_0_1"
+				(polyline
+					(pts (xy -2.54 0) (xy -2.032 0))
+					(stroke (width 0) (type default))
+					(fill (type none))
+				)
+				(polyline
+					(pts (xy -1.016 1.016) (xy -1.016 -1.016))
+					(stroke (width 0) (type default))
+					(fill (type none))
+				)
+				(rectangle (start -1.016 0.508) (end -0.508 -0.508)
+					(stroke (width 0) (type default))
+					(fill (type outline))
+				)
+				(arc (start -1.016 -1.016) (mid -2.0276 0) (end -1.016 1.016)
+					(stroke (width 0) (type default))
+					(fill (type outline))
+				)
+				(rectangle (start -0.508 1.016) (end 0.508 -1.016)
+					(stroke (width 0) (type default))
+					(fill (type outline))
+				)
+				(polyline
+					(pts (xy 0 -1.27) (xy 0 -1.016))
+					(stroke (width 0) (type default))
+					(fill (type none))
+				)
+				(arc (start 1.016 1.016) (mid 2.0276 0) (end 1.016 -1.016)
+					(stroke (width 0) (type default))
+					(fill (type outline))
+				)
+				(polyline
+					(pts (xy 1.016 1.016) (xy 1.016 -1.016))
+					(stroke (width 0) (type default))
+					(fill (type none))
+				)
+				(polyline
+					(pts (xy 2.54 0) (xy 2.032 0))
+					(stroke (width 0) (type default))
+					(fill (type none))
+				)
+			)
+			(symbol "SolderJumper_3_Bridged12_1_1"
+				(pin passive line (at -5.08 0 0) (length 2.54)
+					(name "A"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin passive line (at 0 -3.81 90) (length 2.54)
+					(name "C"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin passive line (at 5.08 0 180) (length 2.54)
+					(name "B"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "3"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Connector_Generic:Conn_01x02"
+			(pin_names (offset 1.016) (hide yes))
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J" (at 0 2.54 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Value" "Conn_01x02" (at 0 -5.08 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Footprint" "" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Datasheet" "" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_keywords" "connector" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_fp_filters" "Connector*:*_1x??_*" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(symbol "Conn_01x02_1_1"
+				(rectangle (start -1.27 1.27) (end 1.27 -3.81)
+					(stroke (width 0.254) (type default))
+					(fill (type background))
+				)
+				(rectangle (start -1.27 0.127) (end 0 -0.127)
+					(stroke (width 0.1524) (type default))
+					(fill (type none))
+				)
+				(rectangle (start -1.27 -2.413) (end 0 -2.667)
+					(stroke (width 0.1524) (type default))
+					(fill (type none))
+				)
+				(pin passive line (at -5.08 0 0) (length 3.81)
+					(name "Pin_1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin passive line (at -5.08 -2.54 0) (length 3.81)
+					(name "Pin_2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Jumper:SolderJumper_2_Bridged"
+			(pin_numbers (hide yes))
+			(pin_names (offset 0) (hide yes))
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "JP" (at 0 2.032 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Value" "SolderJumper_2_Bridged" (at 0 -2.54 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Footprint" "" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Datasheet" "" (at 0 -6.35 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Description" "Solder Jumper, 2-pole, closed/bridged" (at 0 -5.08 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_keywords" "solder jumper SPST" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_fp_filters" "SolderJumper*Bridged*" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(symbol "SolderJumper_2_Bridged_0_1"
+				(rectangle (start -0.508 0.508) (end 0.508 -0.508)
+					(stroke (width 0.1524) (type default))
+					(fill (type outline))
+				)
+				(polyline
+					(pts (xy -0.254 1.016) (xy -0.254 -1.016))
+					(stroke (width 0.1524) (type default))
+					(fill (type none))
+				)
+				(arc (start -0.254 -1.016) (mid -1.2656 0) (end -0.254 1.016)
+					(stroke (width 0.1524) (type default))
+					(fill (type outline))
+				)
+				(arc (start 0.254 1.016) (mid 1.2656 0) (end 0.254 -1.016)
+					(stroke (width 0.1524) (type default))
+					(fill (type outline))
+				)
+				(polyline
+					(pts (xy 0.254 1.016) (xy 0.254 -1.016))
+					(stroke (width 0.1524) (type default))
+					(fill (type none))
+				)
+			)
+			(symbol "SolderJumper_2_Bridged_1_1"
+				(pin passive line (at -5.08 0 0) (length 3.81)
+					(name "A"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin passive line (at 5.08 0 180) (length 3.81)
+					(name "B"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Device:R"
+			(pin_numbers (hide yes))
+			(pin_names (offset 0))
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "R" (at 2.032 0 90) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Value" "R" (at 0 0 90) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Footprint" "" (at -1.778 0 90) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Datasheet" "" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Description" "Resistor" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_keywords" "R res resistor" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_fp_filters" "R_*" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(symbol "R_0_1"
+				(rectangle (start -1.016 -2.54) (end 1.016 2.54)
+					(stroke (width 0.254) (type default))
+					(fill (type none))
+				)
+			)
+			(symbol "R_1_1"
+				(pin passive line (at 0 3.81 270) (length 1.27)
+					(name ""
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin passive line (at 0 -3.81 90) (length 1.27)
+					(name ""
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Device:C"
+			(pin_numbers (hide yes))
+			(pin_names (offset 0.254))
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "C" (at 0.635 2.54 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+					(justify left)
+				)
+			)
+			(property "Value" "C" (at 0.635 -2.54 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+					(justify left)
+				)
+			)
+			(property "Footprint" "" (at 0.9652 -3.81 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Datasheet" "" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Description" "Unpolarized capacitor" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_keywords" "cap capacitor" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_fp_filters" "C_*" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(symbol "C_0_1"
+				(polyline
+					(pts (xy -2.032 0.762) (xy 2.032 0.762))
+					(stroke (width 0.508) (type default))
+					(fill (type none))
+				)
+				(polyline
+					(pts (xy -2.032 -0.762) (xy 2.032 -0.762))
+					(stroke (width 0.508) (type default))
+					(fill (type none))
+				)
+			)
+			(symbol "C_1_1"
+				(pin passive line (at 0 3.81 270) (length 2.794)
+					(name ""
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+				(pin passive line (at 0 -3.81 90) (length 2.794)
+					(name ""
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "2"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "power:PWR_FLAG" (power global)
+			(pin_numbers (hide yes))
+			(pin_names (offset 0) (hide yes))
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#FLG" (at 0 1.905 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Value" "PWR_FLAG" (at 0 3.81 0) (show_name no) (do_not_autoplace no)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Footprint" "" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Datasheet" "" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "Description" "Special symbol for telling ERC where power comes from" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(property "ki_keywords" "flag power" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes)
+				(effects
+					(font (size 1.27 1.27))
+				)
+			)
+			(symbol "PWR_FLAG_0_0"
+				(pin power_out line (at 0 0 90) (length 0)
+					(name ""
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+					(number "1"
+						(effects
+							(font (size 1.27 1.27))
+						)
+					)
+				)
+			)
+			(symbol "PWR_FLAG_0_1"
+				(polyline
+					(pts (xy 0 0) (xy 0 1.27) (xy -1.016 1.905) (xy 0 2.54) (xy 1.016 1.905) (xy 0 1.27))
+					(stroke (width 0) (type default))
+					(fill (type none))
+				)
+			)
+			(embedded_fonts no)
+		)
+	)
+	(label "VDD" (at 63.5 78.74 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "df7c1de9-d8cb-52da-8d6a-72bc051ac534")
+	)
+	(label "3V3" (at 63.5 81.28 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "790a9a6e-0cd6-5b8e-84fc-e0bbe63da499")
+	)
+	(label "GND" (at 63.5 83.82 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "1a533961-8670-5376-8970-4223a57b4100")
+	)
+	(label "SH_GPIO0" (at 63.5 86.36 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "00f6292b-dd79-583f-94a0-ec796b743ebb")
+	)
+	(label "GPIO1" (at 63.5 88.9 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "3ee54678-15c0-5d98-b126-4fc0b8a2626c")
+	)
+	(label "GPIO2" (at 63.5 91.44 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "380b61a0-512b-5ad7-8fcf-ac669a434501")
+	)
+	(label "GPIO3" (at 63.5 93.98 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "5c2953f1-e090-586b-8d42-9c880756d1c5")
+	)
+	(label "CS" (at 88.9 78.74 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "baa3094b-dcaa-571e-8c9d-74160e847215")
+	)
+	(label "SCK" (at 88.9 81.28 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "c3b2250a-395a-552f-b962-a00f0f5ba71b")
+	)
+	(label "SDO" (at 88.9 83.82 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "859adf05-2355-5ae8-9947-1701f9174523")
+	)
+	(label "SDI" (at 88.9 86.36 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "10fe2c66-362f-58ab-a5b5-1892126db1d3")
+	)
+	(label "GPIO4" (at 88.9 88.9 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "2fb1a19c-bae8-510f-8ec4-93b07821f6cc")
+	)
+	(label "GPIO5" (at 88.9 91.44 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "01f03749-8cba-57c7-a882-ad68d40aacd0")
+	)
+	(label "GPIO6" (at 88.9 93.98 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "ce6107ba-8ae4-55e8-a9c8-41a686e31a7f")
+	)
+	(label "SH_GPIO7" (at 88.9 96.52 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "f935d487-9d1d-5fa4-afb5-3cd762f6914a")
+	)
+	(label "PROM" (at 88.9 99.06 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "5eaab2c1-556d-5afe-9321-1c57d8d468e9")
+	)
+	(symbol (lib_id "Shuttle3:Bosch_Shuttle_3.0") (at 76.2 88.9 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "7b5754a7-6a66-5f29-94ab-d94755b19eb9")
+		(property "Reference" "J1" (at 78.74 77.47 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "Shuttle 3.0 sockets" (at 78.74 100.33 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Shuttle3:Bosch_Shuttle_3.0_Sockets" (at 76.2 88.9 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 76.2 88.9 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "MPN" "Sullins LPPB071NFFN-RC + LPPB091NFFN-RC" (at 76.2 88.9 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "f3b8c482-9894-5d91-aa09-58a80d730497"))
+		(pin "2" (uuid "45028e9a-3f1d-5857-a055-af5776db8578"))
+		(pin "3" (uuid "3dfe6223-a248-52da-8d43-1230a07c76a1"))
+		(pin "4" (uuid "93403f12-da48-5839-a9e1-1d5f5bade520"))
+		(pin "5" (uuid "25f062eb-949d-5abb-82d6-7bf336a4a17a"))
+		(pin "6" (uuid "82f89119-8187-59a1-a792-e43e8c40730c"))
+		(pin "7" (uuid "709e5c9a-43d3-5921-8e7d-833fbf82cb57"))
+		(pin "11" (uuid "fd18fdf8-5a08-51f2-8969-1c575d24e7d6"))
+		(pin "12" (uuid "838f6888-970e-58e9-809b-a8b2031be77f"))
+		(pin "13" (uuid "8f37e51c-2714-52ad-8610-572ff8538fcd"))
+		(pin "14" (uuid "fa1177d9-d9a6-5586-9c50-1078b6a7f74e"))
+		(pin "15" (uuid "27e0ab9e-347e-5335-9f69-6fb417d22bae"))
+		(pin "16" (uuid "9bbf8ef5-0339-544a-bcb2-e11713a68130"))
+		(pin "17" (uuid "5fa181ae-fda3-5998-aed0-2ce684eadc76"))
+		(pin "18" (uuid "619f43d1-5f3b-59f4-9920-8a9a74ae9e0c"))
+		(pin "19" (uuid "1c0b8b2c-250c-58e4-80bd-fae4be1d6250"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "J1") (unit 1))
+			)
+		)
+	)
+	(label "D0" (at 152.4 81.28 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "5e146fb9-e9ef-5e70-ad41-a97c8a4465d8")
+	)
+	(label "GPIO1" (at 152.4 83.82 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "24de33f4-8155-5a78-b324-6b5969bfc1dc")
+	)
+	(label "GPIO2" (at 152.4 86.36 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "2eb61d63-2eee-572a-a89a-57034ef25a7f")
+	)
+	(label "GPIO3" (at 152.4 88.9 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "2dda3a5a-7e99-5fbf-a8f8-37877c9c75ee")
+	)
+	(label "GPIO4" (at 152.4 91.44 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "a124c7c1-be6f-562d-97d9-6be5a3f99eff")
+	)
+	(label "GPIO5" (at 152.4 93.98 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "e14c7171-9783-53ba-9f84-fac1b3720aa0")
+	)
+	(label "GPIO6" (at 152.4 96.52 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "bcc51f25-f260-516c-acb8-a1f0dedba2ab")
+	)
+	(label "D7" (at 177.8 96.52 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "abd04bb1-a945-5eeb-a4a3-d55a41a7c032")
+	)
+	(label "SCK" (at 177.8 93.98 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "50a21fab-ed82-5363-8499-0c9e1018cdf4")
+	)
+	(label "SDO" (at 177.8 91.44 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "a0f98d38-4daf-5e65-aa94-fbd1c0a537da")
+	)
+	(label "SDI" (at 177.8 88.9 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "8319da16-5c9f-5c86-b38d-fb0c3dbc6001")
+	)
+	(label "3V3" (at 177.8 86.36 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "f3ce51d2-b9b4-5a38-a9a6-99e5eac2a6dc")
+	)
+	(label "GND" (at 177.8 83.82 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "44909e3a-9cf1-59c3-b957-ada6d6b32ad4")
+	)
+	(no_connect (at 177.8 81.28) (uuid "ed3b9107-c0c9-5c9e-99b1-4e3c7c6dbb6e"))
+	(symbol (lib_id "Shuttle3:XIAO_ESP32S3") (at 165.1 88.9 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "a4b5eed8-32c1-5418-b5f5-0e91b8cb9547")
+		(property "Reference" "U1" (at 167.64 80.01 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "XIAO ESP32S3" (at 167.64 97.79 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Shuttle3:XIAO_ESP32S3_THT" (at 165.1 88.9 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 165.1 88.9 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "MPN" "2x Sullins PPTC071LFBN-RC (1x7 female 2.54 mm, 8.5 mm) for a Seeed XIAO ESP32S3 / Sense" (at 165.1 88.9 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "23c5dda8-375e-5831-abbb-17a8fcfc96e1"))
+		(pin "2" (uuid "cec2d4a7-690e-5244-bf6e-89d2355285c9"))
+		(pin "3" (uuid "1aecdea8-af91-5232-bef2-55833baa66e2"))
+		(pin "4" (uuid "f724e37d-d418-5874-8350-c9f82cd8ec5d"))
+		(pin "5" (uuid "71ac1bf4-c95b-56be-aae6-f482ca72de73"))
+		(pin "6" (uuid "b5116a13-6a82-5490-855b-4110286f871d"))
+		(pin "7" (uuid "c57b7784-cdc6-5c94-9d0a-46349f409132"))
+		(pin "8" (uuid "e90379a0-23b0-5499-9c86-82b69d4858ca"))
+		(pin "9" (uuid "f2ecb0c6-3375-58df-824f-70d85c9e715d"))
+		(pin "10" (uuid "fd270e96-9659-594f-9983-d13b47d7a6a6"))
+		(pin "11" (uuid "5cf0b107-35d2-53f2-af2d-9d17c23a7b5a"))
+		(pin "12" (uuid "1529e04c-5b4e-5b26-ab36-349ced06a119"))
+		(pin "13" (uuid "2ec0b1f6-7947-5036-ac11-b748c48ca005"))
+		(pin "14" (uuid "cbc010c5-720e-5bc4-8e7f-cea1588d6458"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "U1") (unit 1))
+			)
+		)
+	)
+	(label "SH_GPIO0" (at 114.3 124.46 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "3ddd949e-f509-5ee7-8662-2703583cdf93")
+	)
+	(label "D0" (at 119.38 128.27 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "1c30f7f7-2fd5-5641-a744-fd1ac514994b")
+	)
+	(label "CS" (at 124.46 124.46 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "7052570a-9f9d-5088-99b4-621d74cc3559")
+	)
+	(symbol (lib_id "Jumper:SolderJumper_3_Bridged12") (at 119.38 124.46 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board yes) (dnp no) (uuid "f623bbf8-22f3-5dcc-b534-391fbad4be10")
+		(property "Reference" "JP2" (at 121.92 123.19 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "D0 select" (at 121.92 129.54 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm" (at 119.38 124.46 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 119.38 124.46 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "f5efa820-b8d0-583f-b0dc-c37f4337ce11"))
+		(pin "2" (uuid "87ff453e-8330-5d82-b6a2-99e94522ce07"))
+		(pin "3" (uuid "84c3fdca-099e-562a-90c7-fd858c96a6f7"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "JP2") (unit 1))
+			)
+		)
+	)
+	(label "SH_GPIO7" (at 139.7 124.46 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "606e5991-b6c3-5da3-8502-4b1cf3ebe958")
+	)
+	(label "D7" (at 144.78 128.27 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "cdc40f9e-0300-55d1-a8cf-0364c66fdd1d")
+	)
+	(label "PROM" (at 149.86 124.46 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "15c1752a-38db-5c87-a532-71691454accb")
+	)
+	(symbol (lib_id "Jumper:SolderJumper_3_Bridged12") (at 144.78 124.46 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board yes) (dnp no) (uuid "7fe2464a-39bb-5c45-a35c-21e8922b2237")
+		(property "Reference" "JP5" (at 147.32 123.19 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "D7 select" (at 147.32 129.54 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm" (at 144.78 124.46 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 144.78 124.46 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "763524da-3154-5d27-9509-ca84202fa94f"))
+		(pin "2" (uuid "b07c4aad-a124-5c80-b14e-a34ff4397e3e"))
+		(pin "3" (uuid "147deaaf-af19-58df-bd32-010309ef32ca"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "JP5") (unit 1))
+			)
+		)
+	)
+	(label "3V3" (at 160.02 129.54 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "4ea93c14-0a25-566a-b87c-9db985529b57")
+	)
+	(label "VDD" (at 160.02 132.08 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "079ca042-de00-58bd-a1ae-b459ad48f4af")
+	)
+	(symbol (lib_id "Connector_Generic:Conn_01x02") (at 165.1 129.54 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "26548894-3498-559a-bba4-26179eb47221")
+		(property "Reference" "J3" (at 167.64 128.27 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "IDD meter" (at 167.64 133.35 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" (at 165.1 129.54 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 165.1 129.54 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "MPN" "1x2 male header 2.54 mm" (at 165.1 129.54 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "ac469b52-072d-5e0f-b20e-ca5a124ed90a"))
+		(pin "2" (uuid "b63e9701-1610-5a5f-8a51-e4234905b10a"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "J3") (unit 1))
+			)
+		)
+	)
+	(label "3V3" (at 119.38 147.32 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "8aba8e82-c117-5bde-92e0-591826c7a895")
+	)
+	(label "VDD" (at 129.54 147.32 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "1a137899-f0b4-5a5d-a2c7-c62a09fbede1")
+	)
+	(symbol (lib_id "Jumper:SolderJumper_2_Bridged") (at 124.46 147.32 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board yes) (dnp no) (uuid "1c8718fd-4cc9-501c-9b6f-91a85bdfc773")
+		(property "Reference" "JP1" (at 127 146.05 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "IDD" (at 127 148.59 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm" (at 124.46 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 124.46 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "72a54adc-48d2-5d0d-a09f-de14f4314a08"))
+		(pin "2" (uuid "97fdf40b-331b-5c53-9199-af1f5393d70b"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "JP1") (unit 1))
+			)
+		)
+	)
+	(label "3V3" (at 35.56 134.62 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "004fd110-de42-5b6c-a35e-31f0f62a80e0")
+	)
+	(label "PU_SDA" (at 45.72 134.62 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "04b27ea6-a98e-5830-872a-87871cc54990")
+	)
+	(symbol (lib_id "Jumper:SolderJumper_2_Bridged") (at 40.64 134.62 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board yes) (dnp no) (uuid "f5147697-b00f-58e2-a4cc-c4d215a11747")
+		(property "Reference" "JP3" (at 43.18 133.35 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "SDA pull-up" (at 43.18 135.89 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm" (at 40.64 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 40.64 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "d3115ca8-1ecd-5909-a167-9b22e1395e6b"))
+		(pin "2" (uuid "89cb2938-0d36-5ccc-bc99-5c2439fbca0f"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "JP3") (unit 1))
+			)
+		)
+	)
+	(label "PU_SDA" (at 55.88 130.81 90)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "ebdf4bbe-477a-5deb-b1da-09337ce31ce2")
+	)
+	(label "SDI" (at 55.88 138.43 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "842dd8f4-5640-5860-82c8-c76f50edf7ee")
+	)
+	(symbol (lib_id "Device:R") (at 55.88 134.62 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "54326400-151f-568b-a4a0-fec8d1e80931")
+		(property "Reference" "R1" (at 58.42 129.54 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "4.7k" (at 58.42 139.7 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric" (at 55.88 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 55.88 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C23162" (at 55.88 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "e364b992-ebe5-52f4-b2cf-d15fc397347d"))
+		(pin "2" (uuid "1c0b8c8e-9133-5fd7-bf65-c6ae06946f6f"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "R1") (unit 1))
+			)
+		)
+	)
+	(label "3V3" (at 35.56 147.32 180)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "a798d349-6193-503a-996f-3e5c7555e958")
+	)
+	(label "PU_SCL" (at 45.72 147.32 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "61786cac-f5c8-5420-8db1-1e15466754ef")
+	)
+	(symbol (lib_id "Jumper:SolderJumper_2_Bridged") (at 40.64 147.32 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board yes) (dnp no) (uuid "38f20d96-ba57-574a-8de4-d45170446b84")
+		(property "Reference" "JP4" (at 43.18 146.05 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "SCL pull-up" (at 43.18 148.59 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm" (at 40.64 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 40.64 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "3c6b4b6f-2540-5400-8db5-3b480d0a7120"))
+		(pin "2" (uuid "9b0d5b80-9e91-5294-80e2-e7e013d5095e"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "JP4") (unit 1))
+			)
+		)
+	)
+	(label "PU_SCL" (at 55.88 143.51 90)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "c8bee1ee-6e90-5fa3-b295-a136844a1bca")
+	)
+	(label "SCK" (at 55.88 151.13 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "cd3b282d-75e3-5e41-bb2d-26e8a43f9064")
+	)
+	(symbol (lib_id "Device:R") (at 55.88 147.32 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "aca3a93b-cdab-5590-9b44-c5505cd2754a")
+		(property "Reference" "R2" (at 58.42 142.24 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "4.7k" (at 58.42 152.4 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric" (at 55.88 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 55.88 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C23162" (at 55.88 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "2a4a610a-a1dc-54ff-a228-76f8690349cd"))
+		(pin "2" (uuid "4b87d7fc-849a-55b8-a0aa-5921b1905ca5"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "R2") (unit 1))
+			)
+		)
+	)
+	(label "3V3" (at 71.12 143.51 90)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "c5acdd82-c44b-5459-9c26-5ddc6a541703")
+	)
+	(label "PROM" (at 71.12 151.13 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "e229dba2-59fb-5aa5-b434-764c480b6da1")
+	)
+	(symbol (lib_id "Device:R") (at 71.12 147.32 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "ca83251c-d9a3-53a4-95a1-cdbd73b1a18c")
+		(property "Reference" "R3" (at 73.66 142.24 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "1k" (at 73.66 152.4 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric" (at 71.12 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 71.12 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C21190" (at 71.12 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "6fd03604-9c4f-5d92-91e7-083e047e1c51"))
+		(pin "2" (uuid "1a1fd528-0ebf-50e0-b8ea-8c65ece2c202"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "R3") (unit 1))
+			)
+		)
+	)
+	(label "3V3" (at 83.82 143.51 90)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "c55cf6f6-a7e0-56e0-8b17-842194a082a0")
+	)
+	(label "CS" (at 83.82 151.13 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "969935eb-518c-5525-8405-1cda1b06b6db")
+	)
+	(symbol (lib_id "Device:R") (at 83.82 147.32 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "55aa249f-43aa-5a9d-ad07-6571b7add10f")
+		(property "Reference" "R4" (at 86.36 142.24 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "10k" (at 86.36 152.4 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric" (at 83.82 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 83.82 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C25804" (at 83.82 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "9d4be8f3-2caa-53a7-89f7-721199caf700"))
+		(pin "2" (uuid "97fd3655-5024-55a2-b2e9-767238f23c2f"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "R4") (unit 1))
+			)
+		)
+	)
+	(label "VDD" (at 96.52 130.81 90)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "2f3739df-ce1d-550f-a8d9-4d027ca2b892")
+	)
+	(label "GND" (at 96.52 138.43 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "ebf3149b-6ed3-55b9-a5e2-b6784b51f70e")
+	)
+	(symbol (lib_id "Device:C") (at 96.52 134.62 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "9a5105d7-d58d-5a6f-a008-b7c1b250a6f2")
+		(property "Reference" "C1" (at 99.06 129.54 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "100nF" (at 99.06 139.7 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 96.52 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 96.52 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C14663" (at 96.52 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "c86ae56d-fb94-516c-8794-3db5a02eeae5"))
+		(pin "2" (uuid "8bcb7c3b-b80d-5d3b-89b1-b0e23381d21b"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "C1") (unit 1))
+			)
+		)
+	)
+	(label "VDD" (at 106.68 130.81 90)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "2d001d2b-08ac-5c87-af12-44ebd65217db")
+	)
+	(label "GND" (at 106.68 138.43 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "03c7f5ce-58ff-5fd7-9b67-4b6f6685d537")
+	)
+	(symbol (lib_id "Device:C") (at 106.68 134.62 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "6db3dd46-eadc-5278-aba4-a19aab1668c6")
+		(property "Reference" "C2" (at 109.22 129.54 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "10uF" (at 109.22 139.7 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 106.68 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 106.68 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C19702" (at 106.68 134.62 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "95eefc09-031f-5344-be73-1bea709fc2ef"))
+		(pin "2" (uuid "ca457c9c-979b-5bf0-b2ea-05fef07880f9"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "C2") (unit 1))
+			)
+		)
+	)
+	(label "3V3" (at 96.52 143.51 90)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "70b19060-aeaa-5218-9a73-fedefcd7b68c")
+	)
+	(label "GND" (at 96.52 151.13 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "eb43269c-3801-552f-b1a1-f25d4b8ddbbc")
+	)
+	(symbol (lib_id "Device:C") (at 96.52 147.32 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "1cc9f2a7-6950-53df-ab18-960ac5711551")
+		(property "Reference" "C3" (at 99.06 142.24 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "100nF" (at 99.06 152.4 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 96.52 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 96.52 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C14663" (at 96.52 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "58ba9e7b-522b-59ae-99a1-b61f145559ac"))
+		(pin "2" (uuid "65e9efee-85a0-587d-8ac5-7d8a33b97752"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "C3") (unit 1))
+			)
+		)
+	)
+	(label "3V3" (at 106.68 143.51 90)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "b54ac94b-30ec-5d66-9abc-4692aa140238")
+	)
+	(label "GND" (at 106.68 151.13 270)
+		(effects
+			(font (size 1.27 1.27))
+			(justify right bottom)
+		)
+		(uuid "311d6ef3-724a-5696-a572-65af4b70a390")
+	)
+	(symbol (lib_id "Device:C") (at 106.68 147.32 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "e7d03596-e2ad-506c-aac4-e6a974c07623")
+		(property "Reference" "C4" (at 109.22 142.24 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Value" "10uF" (at 109.22 152.4 0)
+			(effects
+				(font (size 1.27 1.27))
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 106.68 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 106.68 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C19702" (at 106.68 147.32 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "4e3b0ab7-3c64-5de3-b3cd-a57ccb45a4a6"))
+		(pin "2" (uuid "2c8b7720-cdee-53ff-b444-1589be83f273"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "C4") (unit 1))
+			)
+		)
+	)
+	(label "VDD" (at 205.74 50.8 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "173981a6-5b64-5cb4-9aab-6c6dc525701a")
+	)
+	(symbol (lib_id "power:PWR_FLAG") (at 205.74 50.8 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "a2b88ae8-49c9-509e-96e6-02bcb2b1c6b6")
+		(property "Reference" "#FLG01" (at 205.74 46.99 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Value" "PWR_FLAG" (at 205.74 46.99 0)
+			(effects
+				(font (size 1.27 1.27))
+			)
+		)
+		(property "Footprint" "" (at 205.74 50.8 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 205.74 50.8 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "bc607d54-f343-5ccd-87b2-b11d1d1f2306"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "#FLG01") (unit 1))
+			)
+		)
+	)
+	(label "GND" (at 220.98 50.8 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left bottom)
+		)
+		(uuid "d7c9eed9-f18b-57df-a393-ec4373470de6")
+	)
+	(symbol (lib_id "power:PWR_FLAG") (at 220.98 50.8 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "bbc5d397-71ab-5d70-bc02-8298c3ab3736")
+		(property "Reference" "#FLG02" (at 220.98 46.99 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Value" "PWR_FLAG" (at 220.98 46.99 0)
+			(effects
+				(font (size 1.27 1.27))
+			)
+		)
+		(property "Footprint" "" (at 220.98 50.8 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "" (at 220.98 50.8 0)
+			(effects
+				(font (size 1.27 1.27))
+				(hide yes)
+			)
+		)
+		(pin "1" (uuid "3a88ba3b-f321-5fa7-af63-ef24e549fee8"))
+		(instances
+			(project "board_b"
+				(path "/67c044cd-7301-5c20-8033-76e0af84a550" (reference "#FLG02") (unit 1))
+			)
+		)
+	)
+	(text "Board B: XIAO ESP32-S3 carrier for a Bosch Shuttle Board 3.0. Shuttle on top, XIAO underneath. 3.3 V only.\nBME690 8x shuttle: D0-D7 (GPIO1, 2, 3, 4, 5, 6, 43, 44) are the chip selects of sensors U1-U8;\nD8 SCK (GPIO7), D9 SDO/MISO (GPIO8), D10 SDI/MOSI (GPIO9). The XIAO Sense's microSD card shares\nD8-D10 (its own CS is GPIO21), so on the 8x board the card and the sensors take turns on one SPI bus." (exclude_from_sim no) (at 25.4 22.86 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left top)
+		)
+		(uuid "2dd0042b-245f-58c5-8714-3cab1bdcfce3")
+	)
+	(text "Selector jumpers, set for the 8x shuttle as made (pads 1-2 joined):\nJP2: D0 -> shuttle GPIO0 (8x: sensor U1 CS). Cut 1-2, bridge 2-3: D0 -> shuttle CS (single-sensor shuttles).\nJP5: D7 -> shuttle GPIO7 (8x: sensor U8 CS). Cut 1-2, bridge 2-3: D7 -> PROM_RW (shuttle ID chip).\nJP1 IDD: cut and put a meter across J3 to measure the sensor VDD current.\nJP3 / JP4: 4.7k I2C pull-ups on SDA / SCL; cut to remove." (exclude_from_sim no) (at 25.4 160.02 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left top)
+		)
+		(uuid "61d237cc-1b91-5a3f-bbbd-cfb3c075af1c")
+	)
+	(text "R3 1k: PROM_RW pull-up for the DS28E05 1-Wire ID chip (datasheet: 300-1500 ohm at 3.3 V,\noverdrive speed only). R4 10k: CS pull-up so single-sensor shuttles start in I2C mode.\nVDDIO is tied to the XIAO's 3V3 (its logic level), so there is no TIE jumper on this board." (exclude_from_sim no) (at 25.4 182.88 0)
+		(effects
+			(font (size 1.27 1.27))
+			(justify left top)
+		)
+		(uuid "a0b4c4e2-a896-566b-8cc2-606066f0c507")
+	)
+	(sheet_instances
+		(path "/" (page "1"))
+	)
+	(embedded_fonts no)
+)
