@@ -12,6 +12,8 @@ dependencies = []
 [project.optional-dependencies]
 # Bosch Application Board 3.1 over USB (the `bme690 info/read/record` commands)
 board = ["coinespy>=1.0.6"]
+# `bme690 monitor` and `bme690 ingest --port`: the ESP32-S3 logger over USB serial
+monitor = ["pyserial>=3.5"]
 # bme690.lab: data loading, deep models, notebooks
 lab = [
     "numpy>=1.26",

@@ -12,6 +12,7 @@ from .profiles import (find, load_duty_cycle_profiles, load_heater_profiles,
                        stabilization_profile)
 from .rawdata import Label, RawDataWriter
 from . import ingest as ingest_mod
+from . import monitor as monitor_mod
 from .recorder import Recorder
 
 
@@ -312,6 +313,11 @@ def cmd_ingest(args) -> int:
     return 0
 
 
+def cmd_monitor(args) -> int:
+    """Live terminal view of the ESP32-S3 logger over its USB serial console."""
+    return monitor_mod.run(args.port, demo=args.demo)
+
+
 def cmd_burn_in(args) -> int:
     """Hold every sensor at 320 degC to stabilise factory-new elements."""
     args.heater_profile = "HP-STAB"
@@ -387,6 +393,14 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--labels", default=None,
                    help="label schedule 'NAME:SECONDS,NAME:SECONDS'")
     g.set_defaults(func=cmd_ingest)
+
+    m = sub.add_parser("monitor",
+                       help="live terminal view of the ESP32-S3 logger (curses)")
+    m.add_argument("--port", default=None,
+                   help="serial port, e.g. /dev/ttyACM0 (default: find the board)")
+    m.add_argument("--demo", action="store_true",
+                   help="show made-up data, no board needed")
+    m.set_defaults(func=cmd_monitor)
     return p
 
 

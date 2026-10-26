@@ -97,6 +97,7 @@ bme690 profiles              heater and duty cycle profiles AI-Studio knows
 bme690 record -o F [...]     record a scan to .bmerawdata
 bme690 burn-in --hours 12    stabilise the sensors
 bme690 ingest -o F --port P  convert the ESP32-S3 logger's USB output to .bmerawdata
+bme690 monitor [--port P]    live terminal view of the ESP32-S3 logger (curses)
 ```
 
 ### Two capture paths, one file format

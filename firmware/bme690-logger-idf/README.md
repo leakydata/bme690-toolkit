@@ -228,6 +228,25 @@ stream into a `.bmerawdata` file:
 bme690 ingest --port /dev/ttyUSB0 -o coffee.bmerawdata --labels "coffee:300,air:300"
 ```
 
+### Watching it in the terminal
+
+`bme690 monitor` is a live curses screen for the USB console: one row per
+sensor (state, temperature, pressure, humidity, gas resistance, heater step,
+heat-stable percentage and a one-character-per-step gas trend), plus the
+recording, card and WiFi state and any problems the board reports.
+
+```bash
+bme690 monitor                       # finds the board's USB port itself
+bme690 monitor --port /dev/ttyACM0
+bme690 monitor --demo                # made-up data, no board needed
+```
+
+Keys: **r** start or stop recording, **l** next label, **s** rescan the
+sensors, **q** quit. If the board's clock was never set (the dashboard does
+this when opened), the monitor sets it. It needs `pip install pyserial`, and
+on Windows `pip install windows-curses`. Close it before running
+`bme690 ingest` or the dashboard's USB tools on the same port.
+
 ## Troubleshooting
 
 The dashboard's **Health** tab diagnoses most problems. It prints the same
