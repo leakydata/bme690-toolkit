@@ -17,6 +17,7 @@
 #include "ota.h"
 #include "storage.h"
 #include "ui.h"
+#include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -807,6 +808,14 @@ cJSON *app_status_json(void)
 	cJSON_AddStringToObject(root, "fw_build", ota_build());
 	cJSON_AddStringToObject(root, "board", net_board_name());
 	cJSON_AddNumberToObject(root, "uptime_ms", (double)(esp_timer_get_time() / 1000));
+	{
+		const uint32_t caps = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
+		cJSON *heap = cJSON_AddObjectToObject(root, "heap");
+
+		cJSON_AddNumberToObject(heap, "free", (double)heap_caps_get_free_size(caps));
+		cJSON_AddNumberToObject(heap, "min_free", (double)heap_caps_get_minimum_free_size(caps));
+		cJSON_AddNumberToObject(heap, "largest", (double)heap_caps_get_largest_free_block(caps));
+	}
 	cJSON_AddBoolToObject(root, "time_set", clock_set());
 	cJSON_AddNumberToObject(root, "unix", (double)time(NULL));
 	cJSON_AddBoolToObject(root, "recording", st.recording);

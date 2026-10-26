@@ -31,6 +31,7 @@ NO_DATA_AFTER_S = 5.0
 STALE_MIN_S = 15.0
 MESSAGE_S = 6.0
 CLOCK_RETRY_S = 10.0
+HEAP_WARN_BYTES = 24 * 1024
 MAX_SENSORS = 16
 
 LEVELS = ".:-=+*#%@"
@@ -296,6 +297,11 @@ def render(model: Model, width: int, height: int, now: float, link_state: str = 
         wifi = st.get("wifi") or {}
         if wifi.get("ssid"):
             text += "   WiFi %s (%s clients)" % (wifi["ssid"], wifi.get("clients", 0))
+        heap = st.get("heap") or {}
+        if heap.get("free") is not None:
+            text += "   heap %dk free (low %dk)" % (heap["free"] // 1024, heap.get("min_free", 0) // 1024)
+            if heap.get("min_free", HEAP_WARN_BYTES) < HEAP_WARN_BYTES:
+                style = "warn"
         lines.append((text, style))
 
     lines.append(("", "norm"))

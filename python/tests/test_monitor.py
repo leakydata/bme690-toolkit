@@ -138,3 +138,14 @@ def test_clock_is_set_only_when_the_board_asks():
     st["time_set"] = True
     m.feed("S," + json.dumps(st), 1001.0)
     assert clock_command(m, 0.0, 1002.0) is None
+
+
+def test_heap_is_shown_and_flagged_when_low():
+    m = loaded()
+    m.status["heap"] = {"free": 150976, "min_free": 136048, "largest": 102400}
+    screen = render(m, 140, 30, 101.0)
+    card = [(t, s) for t, s in screen if t.startswith("Card:")][0]
+    assert "heap 147k free (low 132k)" in card[0] and card[1] == "norm"
+    m.status["heap"] = {"free": 30000, "min_free": 9000, "largest": 8000}
+    card = [(t, s) for t, s in render(m, 140, 30, 101.0) if t.startswith("Card:")][0]
+    assert card[1] == "warn" and "low 8k" in card[0]

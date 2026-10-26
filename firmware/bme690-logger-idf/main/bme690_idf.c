@@ -6,6 +6,7 @@
 #include <string.h>
 
 #define MAX_XFER 64   /* longest burst the core asks for is 51 bytes */
+#define XFER_BUF (MAX_XFER + 4)   /* address byte, padded to a multiple of 4 */
 
 /* One transfer with this sensor's CS held low. The bus is held for the
  * whole time, so an SD card sharing it (XIAO Sense) can never clock while
@@ -27,17 +28,24 @@ static esp_err_t xfer(struct bme690_idf_ctx *ctx, spi_transaction_t *t)
 static int idf_read(void *vctx, uint8_t reg, uint8_t *buf, size_t len)
 {
 	struct bme690_idf_ctx *ctx = vctx;
-	uint8_t tx[MAX_XFER + 1] = { 0 };
-	uint8_t rx[MAX_XFER + 1] = { 0 };
+	/* The SPI driver copies through a temporary heap buffer unless both the
+	 * buffer address and the length are multiples of 4. If that allocation
+	 * ever fails, its clean-up copies from a null pointer and the board
+	 * crashes (seen after a long run). So read buffers are aligned and the
+	 * transfer is padded to a multiple of 4: the extra bytes the sensor
+	 * clocks out are ignored. */
+	uint8_t tx[XFER_BUF] __attribute__((aligned(4))) = { 0 };
+	uint8_t rx[XFER_BUF] __attribute__((aligned(4))) = { 0 };
 	spi_transaction_t t = { 0 };
+	size_t total = (len + 1 + 3) & ~(size_t)3;
 	esp_err_t err;
 
 	if (len > MAX_XFER) {
 		return -1;
 	}
 	tx[0] = reg;
-	t.length = (len + 1) * 8;
-	t.rxlength = (len + 1) * 8;
+	t.length = total * 8;
+	t.rxlength = total * 8;
 	t.tx_buffer = tx;
 	t.rx_buffer = rx;
 

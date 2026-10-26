@@ -434,7 +434,8 @@ void storage_write(const struct reading *r, uint16_t tag, int64_t unix)
 		    r->sensor, r->sensor, (unsigned long)r->ms, (long long)unix,
 		    r->temp, r->press, r->hum, r->gas, r->step, tag) < 0) {
 		set_error("Writing to the SD card failed (%s). Recording stopped; "
-			  "the card may be full or was removed.", strerror(errno));
+			  "the card may be loose, failing, full or removed. "
+			  "Unplug and replug USB to restart it.", strerror(errno));
 		fclose(chunk);
 		chunk = NULL;
 		st.recording = false;
